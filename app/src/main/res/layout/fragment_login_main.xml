@@ -8,8 +8,8 @@
 
     <ImageView
         android:id="@+id/logo"
-        android:layout_width="300dp"
-        android:layout_height="300dp"
+        android:layout_width="340dp"
+        android:layout_height="340dp"
         android:src="@drawable/gamr_logo"
         android:contentDescription="GAMR Logo"
         android:layout_marginBottom="32dp" />

@@ -1,0 +1,26 @@
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    app:startDestination="@id/loginMainFragment">
+
+    <fragment
+        android:id="@+id/loginMainFragment"
+        android:name="com.example.GamrUI.fragments.LoginMainFragment"
+        android:label="LoginMainFragment">
+        <action
+            android:id="@+id/action_loginMainFragment_to_loginFragment"
+            app:destination="@id/loginFragment" />
+        <action
+            android:id="@+id/action_loginMainFragment_to_registerFragment"
+            app:destination="@id/registerFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/loginFragment"
+        android:name="com.example.GamrUI.fragments.LoginFragment"
+        android:label="LoginFragment" />
+
+    <fragment
+        android:id="@+id/registerFragment"
+        android:name="com.example.GamrUI.fragments.RegisterFragment"
+        android:label="RegisterFragment" />
+</navigation>

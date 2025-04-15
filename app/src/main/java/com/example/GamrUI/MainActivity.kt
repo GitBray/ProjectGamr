@@ -18,24 +18,27 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         val bottomNavigationView: BottomNavigationView = findViewById(R.id.bottom_navigation)
-        bottomNavigationView.setOnItemSelectedListener { item ->  // Changed this line
-            var selectedFragment: Fragment? = null
-            when (item.itemId) {
-                R.id.navigation_people -> selectedFragment = PeopleFragment()
-                R.id.navigation_explore -> selectedFragment = ExploreFragment()
-                R.id.navigation_chat -> selectedFragment = ChatFragment()
-                R.id.navigation_profile -> selectedFragment = ProfileFragment()
+
+        // Load the default fragment first
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.fragment_container, PeopleFragment())
+            .commit()
+
+        // Set listener for bottom navigation
+        bottomNavigationView.setOnItemSelectedListener { item ->
+            val selectedFragment: Fragment = when (item.itemId) {
+                R.id.navigation_people -> PeopleFragment()
+                R.id.navigation_explore -> ExploreFragment()
+                R.id.navigation_chat -> ChatFragment()
+                R.id.navigation_profile -> ProfileFragment()
+                else -> PeopleFragment()
             }
-            if (selectedFragment != null) {
-                supportFragmentManager.beginTransaction()
-                    .replace(R.id.nav_host_fragment, selectedFragment)
-                    .commit()
-                true  // Return true to indicate that the selection was handled
-            } else {
-                false // Return false if no fragment was selected (shouldn't happen in this case)
-            }
+
+            supportFragmentManager.beginTransaction()
+                .replace(R.id.fragment_container, selectedFragment)
+                .commit()
+
+            true
         }
-        //Default page will be the 'people' algorithm page.
-        bottomNavigationView.selectedItemId = R.id.navigation_people
     }
 }
