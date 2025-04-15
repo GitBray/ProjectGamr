@@ -5,13 +5,16 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.compose.animation.core.Animatable
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.fragment.app.Fragment
 import com.example.GamrUI.ui.theme.GamrUITheme
@@ -19,7 +22,7 @@ import com.example.GamrUI.RetrofitClient
 import com.example.GamrUI.User
 import kotlinx.coroutines.launch
 
-// ✅ This is your local UI model
+// This is the local UI model
 data class LocalUser(
     val userId: Int,
     val gamertag: String,
@@ -30,6 +33,7 @@ data class LocalUser(
     val bio: String
 )
 
+// Stores a user's choice on another user
 data class Swipe(
     val swiperId: Int,
     val swipeeId: Int,
@@ -59,7 +63,7 @@ class PeopleFragment : Fragment() {
         var allUsers by remember { mutableStateOf<List<User>>(emptyList()) }
         val coroutineScope = rememberCoroutineScope()
 
-        // ✅ Fetch from backend
+        // Fetch data from backend
         LaunchedEffect(Unit) {
             coroutineScope.launch {
                 try {
@@ -75,6 +79,8 @@ class PeopleFragment : Fragment() {
                 }
             }
         }
+
+        // Handle swipe action
         fun handleSwipe(swipee: User, direction: String) {
             val swipe = Swipe(
                 swiperId = currentUserId,
@@ -103,31 +109,93 @@ class PeopleFragment : Fragment() {
             }
         }
 
-
-
         val recommendedUsers = allUsers.filter { user ->
             swipeHistory.none { it.swipeeId == user.user_id && it.swiperId == currentUserId }
         }
 
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp)
-        ) {
-            items(recommendedUsers) { user ->
-                ProfileCard(
-                    user = user.toLocalUser(),
-                    onSwipe = { direction -> handleSwipe(user, direction) }
-                )
-                Spacer(modifier = Modifier.height(16.dp))
+        if (recommendedUsers.isNotEmpty()) {
+            val user = recommendedUsers.first()
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.SpaceBetween // Space between card and buttons
+            ) {
+                // Swipeable card
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f), // Take up available space
+                    contentAlignment = Alignment.Center
+                ) {
+                    SwipeableProfileCard(
+                        user = user.toLocalUser(),
+                        onSwipe = { direction -> handleSwipe(user, direction) }
+                    )
+                }
+
+                // Like and Dislike buttons
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 16.dp),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    Button(onClick = { handleSwipe(user, "dislike") }) {
+                        Text("Dislike")
+                    }
+                    Button(onClick = { handleSwipe(user, "like") }) {
+                        Text("Like")
+                    }
+                }
             }
+        } else {
+            Text("No more users to display", style = MaterialTheme.typography.bodyLarge)
         }
     }
 
     @Composable
-    fun ProfileCard(user: LocalUser, onSwipe: (String) -> Unit) {
+    fun SwipeableProfileCard(user: LocalUser, onSwipe: (String) -> Unit) {
+        var offsetX by remember { mutableStateOf(0f) }
+        val animatableOffsetX = remember { Animatable(0f)}
+
+        LaunchedEffect(offsetX) {
+            if (offsetX > 100f) {
+                animatableOffsetX.animateTo(500f)  // Swipe Right Animation
+                onSwipe("like")  // Trigger the Like action
+                animatableOffsetX.snapTo(0f)  // Reset for next swipe
+                offsetX = 0f
+            } else if (offsetX < -100f) {
+                animatableOffsetX.animateTo(-500f)  // Swipe Left Animation
+                onSwipe("dislike")  // Trigger the Dislike action
+                animatableOffsetX.snapTo(0f)  // Reset for next swipe
+                offsetX = 0f
+            }
+        }
+
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .pointerInput(Unit) {
+                    detectHorizontalDragGestures { _, dragAmount ->
+                        offsetX += dragAmount
+                    }
+                },
+            contentAlignment = Alignment.Center
+        ) {
+            ProfileCard(
+                user = user,
+                modifier = Modifier.offset { IntOffset(animatableOffsetX.value.toInt(), 0) }
+            )
+        }
+    }
+
+    @Composable
+    fun ProfileCard(user: LocalUser, modifier: Modifier = Modifier) {
         Card(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = modifier
+                .fillMaxWidth(0.9f)
+                .height(500.dp), // Adjust height as needed
             elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
@@ -137,32 +205,19 @@ class PeopleFragment : Fragment() {
                 Text(text = "Style: ${user.preferredPlaystyle}")
                 Text(text = "Game: ${user.currentGame}")
                 Text(text = "Bio: ${user.bio}")
-                Spacer(modifier = Modifier.height(12.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly
-                ) {
-                    Button(onClick = { onSwipe("dislike") }) {
-                        Text("Dislike")
-                    }
-                    Button(onClick = { onSwipe("like") }) {
-                        Text("Like")
-                    }
-                }
             }
         }
     }
-}
 
-// ✅ Converts backend user model to local UI model
-fun User.toLocalUser(): LocalUser {
-    return LocalUser(
-        userId = user_id,
-        gamertag = gamertag,
-        name = name,
-        age = age,
-        preferredPlaystyle = preferred_playstyle,
-        currentGame = current_game,
-        bio = bio
-    )
+    fun User.toLocalUser(): LocalUser {
+        return LocalUser(
+            userId = user_id,
+            gamertag = gamertag,
+            name = name,
+            age = age,
+            preferredPlaystyle = preferred_playstyle,
+            currentGame = current_game,
+            bio = bio
+        )
+    }
 }
