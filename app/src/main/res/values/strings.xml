@@ -1,4 +1,10 @@
 <resources>
     <string name="app_name">GamrUI</string>
     <string name="gamr_app_logo_a_stylized_video_game_controller">Gamr App Logo, A Stylized Video Game Controller</string>
+    <string name="casual">Casual</string>
+    <string name="filter_by_play_style">FILTER BY PLAY STYLE</string>
+    <string name="competitive">Competitive</string>
+    <string name="ranked">ranked</string>
+    <string name="coop">Co-op</string>
+    <string name="filter_by_genre">Filter By Genre</string>
 </resources>
