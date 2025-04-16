@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">GamrUI</string>
+    <string name="app_name">Gamr</string>
     <string name="gamr_app_logo_a_stylized_video_game_controller">Gamr App Logo, A Stylized Video Game Controller</string>
     <string name="casual">Casual</string>
     <string name="filter_by_play_style">Filter By Play Style</string>

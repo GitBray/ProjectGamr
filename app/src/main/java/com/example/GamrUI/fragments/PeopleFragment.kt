@@ -47,8 +47,8 @@ class PeopleFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        return ComposeView(requireContext()).apply {
-            setContent {
+        return ComposeView(requireContext()).apply { //Creates a view that applies the theme and
+            setContent {                             // calls the method for making the Profile Feed Screen
                 GamrUITheme {
                     ProfileFeedScreen()
                 }
@@ -80,7 +80,7 @@ class PeopleFragment : Fragment() {
             }
         }
 
-        // Handles swipe action and sends it to the server
+        // Handles user's choice on another user and sends it to the server
         fun handleSwipe(swipee: User, direction: String) {
             val swipe = Swipe(
                 swiperId = currentUserId,
@@ -127,7 +127,7 @@ class PeopleFragment : Fragment() {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .weight(1f), // Take up available space
+                        .weight(1f), // takes up available space
                     contentAlignment = Alignment.Center
                 ) {
                     SwipeableProfileCard(
@@ -163,29 +163,29 @@ class PeopleFragment : Fragment() {
 
         LaunchedEffect(offsetX) {
             if (offsetX > 100f) {
-                animatableOffsetX.animateTo(500f)  // Swipe Right Animation
-                onSwipe("like")  // Trigger the Like action
-                animatableOffsetX.snapTo(0f)  // Reset for next swipe
+                animatableOffsetX.animateTo(500f)  // animates the card on a right swipe
+                onSwipe("like")  // performs like action
+                animatableOffsetX.snapTo(0f)  // resets card for next swipe
                 offsetX = 0f
             } else if (offsetX < -100f) {
-                animatableOffsetX.animateTo(-500f)  // Swipe Left Animation
-                onSwipe("dislike")  // Trigger the Dislike action
-                animatableOffsetX.snapTo(0f)  // Reset for next swipe
+                animatableOffsetX.animateTo(-500f) // animates the card on a left swipe
+                onSwipe("dislike")  // performs dislike action
+                animatableOffsetX.snapTo(0f)  // resets card for next swipe
                 offsetX = 0f
             }
         }
 
-        Box(
+        Box( // card is a center aligned box
             modifier = Modifier
                 .fillMaxSize()
-                .pointerInput(Unit) {
+                .pointerInput(Unit) { // pointerInput handles reading of swipe input
                     detectHorizontalDragGestures { _, dragAmount ->
-                        offsetX += dragAmount
+                        offsetX += dragAmount // communicate severity of swipe
                     }
                 },
             contentAlignment = Alignment.Center
         ) {
-            ProfileCard(
+            ProfileCard( // displays the card information within the swipable card
                 user = user,
                 modifier = Modifier.offset { IntOffset(animatableOffsetX.value.toInt(), 0) }
             )
@@ -193,11 +193,11 @@ class PeopleFragment : Fragment() {
     }
 
     @Composable
-    fun ProfileCard(user: LocalUser, modifier: Modifier = Modifier) {
+    fun ProfileCard(user: LocalUser, modifier: Modifier = Modifier) { // handles information stored
         Card(
             modifier = modifier
-                .fillMaxWidth(0.9f)
-                .height(500.dp), // Adjust height as needed
+                .fillMaxWidth(0.9f) // takes up 90% of screen width
+                .height(500.dp),
             elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
