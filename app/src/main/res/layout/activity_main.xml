@@ -3,7 +3,15 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"> <!-- Following views added will be stacked on top of each other -->
+    android:orientation="vertical"> <!-- Views stack on top of each other -->
+
+    <ImageView
+        android:id="@+id/app_logo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:scaleType="fitXY"
+        android:contentDescription="@string/gamr_app_logo_a_stylized_video_game_controller"
+        android:src="@drawable/ic_logo" />
 
     <!-- Fragment container, used in MainActivity to access fragments-->
     <FrameLayout

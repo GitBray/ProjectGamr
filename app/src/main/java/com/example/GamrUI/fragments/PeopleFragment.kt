@@ -140,7 +140,7 @@ class PeopleFragment : Fragment() {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 16.dp),
+                        .padding(bottom=16.dp),
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
                     Button(onClick = { handleSwipe(user, "dislike") }) {
