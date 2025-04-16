@@ -13,7 +13,7 @@
         android:id="@+id/titleText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="45dp"
+        android:layout_marginTop="16dp"
         android:text="Profile"
         android:textColor="@color/cardview_dark_background"
         android:textSize="24sp"
