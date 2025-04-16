@@ -1,5 +1,6 @@
 package com.example.GamrUI
 
+// maps user profile pulled from database
 data class User(
     val user_id: Int,
     val gamertag: String,

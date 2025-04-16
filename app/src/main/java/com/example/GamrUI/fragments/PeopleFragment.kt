@@ -22,7 +22,7 @@ import com.example.GamrUI.RetrofitClient
 import com.example.GamrUI.User
 import kotlinx.coroutines.launch
 
-// This is the local UI model
+// This is the local UI model for class LocalUser
 data class LocalUser(
     val userId: Int,
     val gamertag: String,
@@ -58,12 +58,12 @@ class PeopleFragment : Fragment() {
 
     @Composable
     fun ProfileFeedScreen() {
-        val currentUserId = 1
+        val currentUserId = 1 //sets user to TheRealBatman
         val swipeHistory = remember { mutableStateListOf<Swipe>() }
         var allUsers by remember { mutableStateOf<List<User>>(emptyList()) }
         val coroutineScope = rememberCoroutineScope()
 
-        // Fetch data from backend
+        // Fetch data from backend when screen starts
         LaunchedEffect(Unit) {
             coroutineScope.launch {
                 try {
@@ -80,7 +80,7 @@ class PeopleFragment : Fragment() {
             }
         }
 
-        // Handle swipe action
+        // Handles swipe action and sends it to the server
         fun handleSwipe(swipee: User, direction: String) {
             val swipe = Swipe(
                 swiperId = currentUserId,
@@ -109,10 +109,12 @@ class PeopleFragment : Fragment() {
             }
         }
 
+        // filters out already swiped users
         val recommendedUsers = allUsers.filter { user ->
             swipeHistory.none { it.swipeeId == user.user_id && it.swiperId == currentUserId }
         }
 
+        // displays first recommended user with swipe card
         if (recommendedUsers.isNotEmpty()) {
             val user = recommendedUsers.first()
             Column(
@@ -209,6 +211,7 @@ class PeopleFragment : Fragment() {
         }
     }
 
+    // converts backend User model to UI model
     fun User.toLocalUser(): LocalUser {
         return LocalUser(
             userId = user_id,
