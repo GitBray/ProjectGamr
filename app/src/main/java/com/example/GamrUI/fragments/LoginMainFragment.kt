@@ -10,6 +10,7 @@ import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.example.GamrUI.R
 
+// this is the landing fragment shown in the app after the app lanches
 class LoginMainFragment : Fragment() {
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -20,10 +21,12 @@ class LoginMainFragment : Fragment() {
         val loginButton = view.findViewById<Button>(R.id.loginButton)
         val registerButton = view.findViewById<Button>(R.id.registerButton)
 
+        // it navigates to loginfragment when login button is clicked
         loginButton.setOnClickListener {
             findNavController().navigate(R.id.action_loginMainFragment_to_loginFragment)
         }
 
+        // it navigates to registerfragment when regester button is clicked
         registerButton.setOnClickListener {
             findNavController().navigate(R.id.action_loginMainFragment_to_registerFragment)
         }
