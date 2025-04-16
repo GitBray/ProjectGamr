@@ -7,4 +7,8 @@
     <string name="ranked">ranked</string>
     <string name="coop">Co-op</string>
     <string name="filter_by_genre">Filter By Genre</string>
+    <string name="fps">FPS</string>
+    <string name="racing">racing</string>
+    <string name="moba">moba</string>
+    <string name="fighting">fighting</string>
 </resources>
