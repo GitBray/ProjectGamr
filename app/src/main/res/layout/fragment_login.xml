@@ -5,12 +5,14 @@
     android:padding="24dp"
     android:gravity="center">
 
+    <!-- Email input field -->
     <EditText
         android:id="@+id/emailField"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:hint="Email" />
 
+    <!-- password input field -->
     <EditText
         android:id="@+id/passwordField"
         android:layout_width="match_parent"
@@ -19,6 +21,7 @@
         android:inputType="textPassword"
         android:layout_marginTop="8dp" />
 
+    <!-- loginbutton-->
     <Button
         android:id="@+id/loginButton"
         android:layout_width="match_parent"

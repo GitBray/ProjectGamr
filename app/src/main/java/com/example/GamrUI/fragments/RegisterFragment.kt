@@ -12,6 +12,7 @@ import androidx.fragment.app.Fragment
 import com.example.GamrUI.MainActivity
 import com.example.GamrUI.R
 
+// fragment to handle user regestration which collects the username, password, and email from user
 class RegisterFragment : Fragment() {
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -24,6 +25,7 @@ class RegisterFragment : Fragment() {
         val passwordField = view.findViewById<EditText>(R.id.passwordField)
         val registerButton = view.findViewById<Button>(R.id.registerButton)
 
+        // when user clicks registerbutton
         registerButton.setOnClickListener {
             val username = usernameField.text.toString()
 

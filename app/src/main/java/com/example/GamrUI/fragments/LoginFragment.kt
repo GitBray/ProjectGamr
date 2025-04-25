@@ -12,6 +12,7 @@ import androidx.fragment.app.Fragment
 import com.example.GamrUI.MainActivity
 import com.example.GamrUI.R
 
+// fragment to handle user login
 class LoginFragment : Fragment() {
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -23,6 +24,7 @@ class LoginFragment : Fragment() {
         val passwordField = view.findViewById<EditText>(R.id.passwordField)
         val loginButton = view.findViewById<Button>(R.id.loginButton)
 
+        // when user clicks login
         loginButton.setOnClickListener {
             val email = emailField.text.toString()
             val password = passwordField.text.toString()
