@@ -7,7 +7,7 @@ object RetrofitClient {
     // Base URL of the backend server
     // points to device where the folders where the PHP files are
     // replace ip address with your current ip address to work
-    private const val BASE_URL = "http://138.47.160.38/gamr_api/"
+    private const val BASE_URL = "http://138.47.160.170/"
 
     // interface used for API calls
     val apiService: ApiService by lazy {
