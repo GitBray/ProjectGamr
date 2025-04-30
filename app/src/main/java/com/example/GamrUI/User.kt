@@ -8,5 +8,7 @@ data class User(
     val age: Int,
     val preferred_playstyle: String,
     val current_game: String,
-    val bio: String
+    val bio: String,
+    val latitude: Double?,
+    val longitude: Double?
 )
