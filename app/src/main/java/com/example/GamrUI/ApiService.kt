@@ -6,6 +6,8 @@ import retrofit2.http.POST
 import retrofit2.http.Field
 import retrofit2.http.FormUrlEncoded
 import retrofit2.http.Query
+import retrofit2.Call
+
 
 //This file defines all HTTP requests the app makes to the backend
 //Retrofit uses this interface to generate the actual network call code behind the scenes.
@@ -25,5 +27,46 @@ interface ApiService {
         @Field("swipee_id") swipeeId: Int,
         @Field("direction") direction: String
     ): Response<Map<String, Any>>
+
+    @FormUrlEncoded
+    @POST("update_profile.php")
+    fun updateProfile(
+        @Field("user_id") userId: String,
+        @Field("bio") bio: String,
+        @Field("discord") discord: String,
+        @Field("instagram") instagram: String,
+        @Field("playing_style") playingStyle: String
+    ): Call<UpdateResponse>
+
+    @FormUrlEncoded
+    @POST("send_message.php")
+    fun sendMessage(
+        @Field("sender_id") senderId: Int,
+        @Field("reciever_id") receiverId: Int,
+        @Field("message") message: String
+    ): Call<GenericResponse>
+
+    @GET("get_messages.php")
+    fun getMessages(
+        @Query("user1") user1: Int,
+        @Query("user2") user2: Int
+    ): Call<List<Message>>
+
+    @FormUrlEncoded
+    @POST("update_file.php")
+    fun updateProfile(
+        @Field("user_id") userId: Int,
+        @Field("bio") bio: String,
+        @Field("discord") discord: String,
+        @Field("instagram") instagram: String,
+        @Field("playing_style") playStyle: String
+    ): Call<GenericResponse>
+
+    @GET("get_profile.php")
+    fun getProfile(
+        @Query("user_id") userId: Int
+    ): Call<UserProfile>
+
+
 }
 
