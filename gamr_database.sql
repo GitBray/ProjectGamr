@@ -93,3 +93,9 @@ UPDATE users SET current_game_genre = 'Racing' WHERE current_game = 'Mario Kart'
 
 -- sets it back for safty
 SET SQL_SAFE_UPDATES = 1;
+
+-- adds text bio's, discord, insta, playstyle
+ALTER TABLE users
+ADD COLUMN discord VARCHAR(255),
+ADD COLUMN instagram VARCHAR(255),
+ADD COLUMN playing_style VARCHAR(50);
