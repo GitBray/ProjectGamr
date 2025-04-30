@@ -8,5 +8,6 @@ data class User(
     val age: Int,
     val preferred_playstyle: String,
     val current_game: String,
+    val current_game_genre: String,
     val bio: String
 )

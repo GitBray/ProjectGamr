@@ -21,6 +21,8 @@ import com.example.GamrUI.ui.theme.GamrUITheme
 import com.example.GamrUI.RetrofitClient
 import com.example.GamrUI.User
 import kotlinx.coroutines.launch
+import androidx.fragment.app.activityViewModels
+import com.example.GamrUI.FilterViewModel
 
 // This is the local UI model for class LocalUser
 data class LocalUser(
@@ -42,6 +44,7 @@ data class Swipe(
 )
 
 class PeopleFragment : Fragment() {
+    private val filterViewModel: FilterViewModel by activityViewModels()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -62,6 +65,11 @@ class PeopleFragment : Fragment() {
         val swipeHistory = remember { mutableStateListOf<Swipe>() }
         var allUsers by remember { mutableStateOf<List<User>>(emptyList()) }
         val coroutineScope = rememberCoroutineScope()
+
+
+        //Observe the playstyle filters
+        val selectedPlaystles by filterViewModel.selectedPlaystyles.collectAsState()
+        val selectedGenres by filterViewModel.selectedGenres.collectAsState()
 
         // Fetch data from backend when screen starts
         LaunchedEffect(Unit) {
@@ -112,6 +120,8 @@ class PeopleFragment : Fragment() {
         // filters out already swiped users
         val recommendedUsers = allUsers.filter { user ->
             swipeHistory.none { it.swipeeId == user.user_id && it.swiperId == currentUserId }
+                    && (selectedPlaystles.isEmpty() || selectedPlaystles.contains(user.preferred_playstyle))
+                    && (selectedGenres.isEmpty() || selectedGenres.contains(user.current_game_genre))
         }
 
         // displays first recommended user with swipe card

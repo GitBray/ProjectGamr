@@ -77,3 +77,19 @@ WHERE s1.direction = 'like' AND s2.direction = 'like';
 SELECT * FROM users
 WHERE user_id != 1
   AND preferred_playstyle = (SELECT preferred_playstyle FROM users WHERE user_id = 1);
+
+ALTER TABLE users ADD COLUMN current_game_genre VARCHAR(30);
+
+-- allows for UPDATE
+SET SQL_SAFE_UPDATES = 0;
+
+-- sets games to genres (Can add more)
+UPDATE users SET current_game_genre = 'Fighting' WHERE current_game = 'Dragon Ball Fighters';
+UPDATE users SET current_game_genre = 'Fighting' WHERE current_game = 'Super Smash Bros Ultimate';
+UPDATE users SET current_game_genre = 'FPS' WHERE current_game = 'Valorant';
+UPDATE users SET current_game_genre = 'FPS' WHERE current_game = 'Call of Duty: Black Ops 6';
+UPDATE users SET current_game_genre = 'MOBA' WHERE current_game = 'Marvel Rivals';
+UPDATE users SET current_game_genre = 'Racing' WHERE current_game = 'Mario Kart'; 
+
+-- sets it back for safty
+SET SQL_SAFE_UPDATES = 1;
