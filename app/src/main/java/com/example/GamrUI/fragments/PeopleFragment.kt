@@ -69,6 +69,7 @@ class PeopleFragment : Fragment() {
 
         //Observe the playstyle filters
         val selectedPlaystles by filterViewModel.selectedPlaystyles.collectAsState()
+        val selectedGenres by filterViewModel.selectedGenres.collectAsState()
 
         // Fetch data from backend when screen starts
         LaunchedEffect(Unit) {
@@ -120,6 +121,7 @@ class PeopleFragment : Fragment() {
         val recommendedUsers = allUsers.filter { user ->
             swipeHistory.none { it.swipeeId == user.user_id && it.swiperId == currentUserId }
                     && (selectedPlaystles.isEmpty() || selectedPlaystles.contains(user.preferred_playstyle))
+                    && (selectedGenres.isEmpty() || selectedGenres.contains(user.current_game_genre))
         }
 
         // displays first recommended user with swipe card
