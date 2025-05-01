@@ -2,6 +2,8 @@ CREATE DATABASE IF NOT EXISTS Gamr;
 USE Gamr;
 
 -- Drop tables if needed (optional safety reset)
+DROP TABLE IF EXISTS matches;
+DROP TABLE IF EXISTS messages;
 DROP TABLE IF EXISTS swipes;
 DROP TABLE IF EXISTS region;
 DROP TABLE IF EXISTS games_played;
@@ -41,6 +43,26 @@ timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
 PRIMARY KEY (swiper_id, swipee_id),
 FOREIGN KEY (swiper_id) REFERENCES users(user_id),
 FOREIGN KEY (swipee_id) REFERENCES users(user_id)
+);
+
+CREATE TABLE matches (
+match_id INT AUTO_INCREMENT PRIMARY KEY,
+user1_id INT NOT NULL,
+user2_id INT NOT NULL,
+match_key VARCHAR(20) NOT NULL UNIQUE,  -- New field to prevent duplicates
+match_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+FOREIGN KEY (user1_id) REFERENCES users(user_id),
+FOREIGN KEY (user2_id) REFERENCES users(user_id)
+);
+
+CREATE TABLE messages(
+message_id INT AUTO_INCREMENT PRIMARY KEY,
+sender_id INT NOT NULL,
+reciever_id INT NOT NULL,
+message TEXT NOT NULL,
+TIMESTAMP DATETIME DEFAULT CURRENT_TIMESTAMP,
+FOREIGN KEY (sender_id) REFERENCES users(user_id),
+FOREIGN KEY (reciever_id) REFERENCES users(user_id)
 );
 
 INSERT INTO users (gamertag, name, age, preferred_playstyle, current_game, bio, latitude, longitude)
