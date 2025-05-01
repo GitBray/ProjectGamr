@@ -11,4 +11,9 @@
     <string name="racing">racing</string>
     <string name="moba">moba</string>
     <string name="fighting">fighting</string>
+    <string-array name="playing_styles">
+        <item>Competitive</item>
+        <item>Non-competitive</item>
+        <item>Casual</item>
+    </string-array>
 </resources>
