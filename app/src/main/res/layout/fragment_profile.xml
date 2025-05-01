@@ -11,6 +11,23 @@
         android:gravity="center_horizontal"
         android:spacing="16dp">
 
+        <ImageView
+            android:id="@+id/imageViewProfile"
+            android:layout_width="150dp"
+            android:layout_height="150dp"
+            android:layout_gravity="center"
+            android:scaleType="centerCrop"
+            android:layout_marginBottom="16dp"
+            android:src="@android:drawable/ic_menu_camera"
+            />
+
+        <Button
+            android:id="@+id/buttonSelectImage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Select Image"
+            android:layout_gravity="center"/>
+
         <TextView
             android:id="@+id/textViewPlayStyleLabel"
             android:layout_width="wrap_content"
