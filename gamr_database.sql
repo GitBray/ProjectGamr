@@ -67,7 +67,7 @@ FOREIGN KEY (reciever_id) REFERENCES users(user_id)
 
 INSERT INTO users (gamertag, name, age, preferred_playstyle, current_game, bio, latitude, longitude)
 VALUES
-('theRealBatman', 'Gage', 21, 'Casual', 'Arkham Knight', 'Justice for Gotham', 32.5282, -92.6379), -- Ruston, LA
+('theRealBatman', 'Gage', 21, '', 'Arkham Knight', '', 32.5282, -92.6379), -- Ruston, LA
 ('BananaJoe', 'Joe', 23, 'Competitive', 'Call of Duty: Black Ops 6', 'Need a group.', 32.5053, -92.7064), -- Grambling, LA
 ('KillerQueen21', 'Eva', 19, 'Competitive', 'Valorant', 'Help me climb the ranks.', 32.5368, -92.0454), -- Monroe, LA
 ('UnitMan', 'Luke', 27, 'Casual', 'Stardew Valley', 'Let me show you my town.', 32.6178, -93.7473), -- Shreveport, LA
