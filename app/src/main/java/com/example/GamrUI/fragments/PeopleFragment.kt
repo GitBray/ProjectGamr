@@ -1,5 +1,9 @@
 package com.example.GamrUI.fragments
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.location.Geocoder
+import android.location.Location
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -15,14 +19,22 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.unit.IntOffset
+import android.content.Context
+import java.util.*
 import androidx.compose.ui.unit.dp
+import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
 import com.example.GamrUI.ui.theme.GamrUITheme
 import com.example.GamrUI.RetrofitClient
 import com.example.GamrUI.User
-import kotlinx.coroutines.launch
-import androidx.fragment.app.activityViewModels
 import com.example.GamrUI.FilterViewModel
+import kotlinx.coroutines.launch
+import java.io.IOException
+import kotlin.math.pow
+import kotlin.math.roundToInt
 
 // This is the local UI model for class LocalUser
 data class LocalUser(
@@ -32,8 +44,13 @@ data class LocalUser(
     val age: Int,
     val preferredPlaystyle: String,
     val currentGame: String,
-    val bio: String
+    val bio: String,
+    val latitude: Double?,
+    val longitude: Double?,
+    val nearestTown: String?,
+    val distanceInMiles: Double? = null
 )
+
 
 // Stores a user's choice on another user
 data class Swipe(
@@ -45,13 +62,26 @@ data class Swipe(
 
 class PeopleFragment : Fragment() {
     private val filterViewModel: FilterViewModel by activityViewModels()
+    private lateinit var fusedLocationClient: FusedLocationProviderClient
+    private var currentLatitude: Double? = null
+    private var currentLongitude: Double? = null
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        // Initialize FusedLocationProviderClient
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext())
+
+        // Fetch current location
+        fetchUserLocation()
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        return ComposeView(requireContext()).apply { //Creates a view that applies the theme and
-            setContent {                             // calls the method for making the Profile Feed Screen
+        return ComposeView(requireContext()).apply {
+            setContent {
                 GamrUITheme {
                     ProfileFeedScreen()
                 }
@@ -59,19 +89,51 @@ class PeopleFragment : Fragment() {
         }
     }
 
+    // Permission initialized in AndroidManifest, Permissions requested here.
+    // Makes use of FusedLocationProviderClient to get current location
+    // AI assisted with use of 'Context', it's purpose is to assist in accessing resources
+    // (like location) from outside of the fragment.
+    private fun fetchUserLocation() {
+        if (ActivityCompat.checkSelfPermission(
+                requireContext(),
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED &&
+            ActivityCompat.checkSelfPermission(
+                requireContext(),
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            // Request permissions
+            requestPermissions( //requestPermissions is a deprecated function and will be replaced
+                                // app is still currently functional with it's inclusion.
+                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+                LOCATION_PERMISSION_REQUEST_CODE
+            )
+            return
+        }
+
+        //Error detection - Virtual Devices don't seem to like using location
+        fusedLocationClient.lastLocation.addOnSuccessListener { location: Location? ->
+            location?.let {
+                currentLatitude = it.latitude
+                currentLongitude = it.longitude
+                Log.d("LOCATION", "Latitude: $currentLatitude, Longitude: $currentLongitude")
+            } ?: Log.e("LOCATION", "Failed to fetch location.")
+        }.addOnFailureListener {
+            Log.e("LOCATION", "Error: ${it.message}")
+        }
+    }
+
     @Composable
     fun ProfileFeedScreen() {
-        val currentUserId = 1 //sets user to TheRealBatman
+        val currentUserId = 1 // Sets user to TheRealBatman
         val swipeHistory = remember { mutableStateListOf<Swipe>() }
         var allUsers by remember { mutableStateOf<List<User>>(emptyList()) }
         val coroutineScope = rememberCoroutineScope()
 
-
-        //Observe the playstyle filters
         val selectedPlaystles by filterViewModel.selectedPlaystyles.collectAsState()
         val selectedGenres by filterViewModel.selectedGenres.collectAsState()
 
-        // Fetch data from backend when screen starts
         LaunchedEffect(Unit) {
             coroutineScope.launch {
                 try {
@@ -117,40 +179,51 @@ class PeopleFragment : Fragment() {
             }
         }
 
-        // filters out already swiped users
+        // Filter out already swiped users and apply the playstyle and genre filters
         val recommendedUsers = allUsers.filter { user ->
             swipeHistory.none { it.swipeeId == user.user_id && it.swiperId == currentUserId }
                     && (selectedPlaystles.isEmpty() || selectedPlaystles.contains(user.preferred_playstyle))
                     && (selectedGenres.isEmpty() || selectedGenres.contains(user.current_game_genre))
         }
 
-        // displays first recommended user with swipe card
-        if (recommendedUsers.isNotEmpty()) {
-            val user = recommendedUsers.first()
+        // Sort users by distance from the current user
+        // If location cannot be accessed, distance is set to 0.0 and algorithm displays users
+        // in order of their appearance on the database
+        val sortedUsers = recommendedUsers.map { user ->
+            val distance = currentLatitude?.let { lat1 ->
+                currentLongitude?.let { lon1 ->
+                    calculateDistance(lat1, lon1, user.latitude ?: 0.0, user.longitude ?: 0.0)
+                }
+            } ?: 0.0
+            user to distance // Pairs user with its calculated distance
+        }.sortedBy { it.second } // Sorts by distance in ascending order.
+
+        // Display users sorted by distance
+        if (sortedUsers.isNotEmpty()) {
+            val user = sortedUsers.first().first // First user will have shortest distance
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(16.dp),
-                verticalArrangement = Arrangement.SpaceBetween // Space between card and buttons
+                verticalArrangement = Arrangement.SpaceBetween
             ) {
-                // Swipeable card
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .weight(1f), // takes up available space
+                        .weight(1f),
                     contentAlignment = Alignment.Center
                 ) {
+                    // Pass context to toLocalUser
                     SwipeableProfileCard(
-                        user = user.toLocalUser(),
+                        user = user.toLocalUser(requireContext()),
                         onSwipe = { direction -> handleSwipe(user, direction) }
                     )
                 }
 
-                // Like and Dislike buttons
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(bottom=16.dp),
+                        .padding(bottom = 16.dp),
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
                     Button(onClick = { handleSwipe(user, "dislike") }) {
@@ -162,51 +235,93 @@ class PeopleFragment : Fragment() {
                 }
             }
         } else {
-            Text("No more users to display", style = MaterialTheme.typography.bodyLarge)
+            Text("No more users to display", style = MaterialTheme.typography.bodyLarge, color= MaterialTheme.colorScheme.onBackground)
         }
     }
 
+    // Profile card with swiping functionality
+    // Detects gestures, if a certain amount of movement is detected, perform swipes.
+    // Information displayed is stored in ProfileCard composable
     @Composable
     fun SwipeableProfileCard(user: LocalUser, onSwipe: (String) -> Unit) {
         var offsetX by remember { mutableStateOf(0f) }
-        val animatableOffsetX = remember { Animatable(0f)}
+        val animatableOffsetX = remember { Animatable(0f) }
 
         LaunchedEffect(offsetX) {
             if (offsetX > 100f) {
-                animatableOffsetX.animateTo(500f)  // animates the card on a right swipe
-                onSwipe("like")  // performs like action
-                animatableOffsetX.snapTo(0f)  // resets card for next swipe
+                animatableOffsetX.animateTo(500f)
+                onSwipe("like")
+                animatableOffsetX.snapTo(0f)
                 offsetX = 0f
             } else if (offsetX < -100f) {
-                animatableOffsetX.animateTo(-500f) // animates the card on a left swipe
-                onSwipe("dislike")  // performs dislike action
-                animatableOffsetX.snapTo(0f)  // resets card for next swipe
+                animatableOffsetX.animateTo(-500f)
+                onSwipe("dislike")
+                animatableOffsetX.snapTo(0f)
                 offsetX = 0f
             }
         }
-
-        Box( // card is a center aligned box
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .pointerInput(Unit) { // pointerInput handles reading of swipe input
+                .pointerInput(Unit) {
                     detectHorizontalDragGestures { _, dragAmount ->
-                        offsetX += dragAmount // communicate severity of swipe
+                        offsetX += dragAmount
                     }
                 },
             contentAlignment = Alignment.Center
         ) {
-            ProfileCard( // displays the card information within the swipable card
+            ProfileCard(
                 user = user,
                 modifier = Modifier.offset { IntOffset(animatableOffsetX.value.toInt(), 0) }
             )
         }
     }
 
+    // Determine a profile's city.
+    // Makes use of android's geocoder
+    // Stores a city and state as strings if an address can be found.
+    // Returns 'Unknown' if location cannot be accessed.
+    // AI assistance provided me with a 'deprecated' function, I am commiting with these
+    // for now and revisiting these functions after work is done on my second user story.
+    fun getNearestTown(context: Context, latitude: Double, longitude: Double): String? {
+        return try {
+            val geocoder = Geocoder(context, Locale.getDefault()) // initialize the geocoder
+            val addresses = geocoder.getFromLocation(latitude, longitude, 1) // receives an address matching coordinates
+            if (!addresses.isNullOrEmpty()) {
+                val city = addresses[0].locality ?: addresses[0].subAdminArea
+                val state = addresses[0].adminArea
+                if (city != null && state != null) "$city, $state"
+                else city ?: state ?: "Unknown"
+            } else {
+                "Unknown"
+            }
+        } catch (e: IOException) {
+            e.printStackTrace()
+            "Unknown"
+        }
+    }
+
+    // Calculates distance between two coordinates using a known algorithm entitled "Haversine formula"
+    // ChatGPT assisted in getting it written in Kotlin
+    fun calculateDistance(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
+        val earthRadiusMiles = 3958.8 // Earth radius in miles
+        val dLat = Math.toRadians(lat2 - lat1)
+        val dLon = Math.toRadians(lon2 - lon1)
+
+        val a = Math.sin(dLat / 2).pow(2) +
+                Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) *
+                Math.sin(dLon / 2).pow(2)
+
+        val c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+        return earthRadiusMiles * c
+    }
+
+    // Profile card defines defines the information that will be displayed on the card.
     @Composable
-    fun ProfileCard(user: LocalUser, modifier: Modifier = Modifier) { // handles information stored
+    fun ProfileCard(user: LocalUser, modifier: Modifier = Modifier) {
         Card(
             modifier = modifier
-                .fillMaxWidth(0.9f) // takes up 90% of screen width
+                .fillMaxWidth(0.9f)
                 .height(500.dp),
             elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
         ) {
@@ -217,12 +332,27 @@ class PeopleFragment : Fragment() {
                 Text(text = "Style: ${user.preferredPlaystyle}")
                 Text(text = "Game: ${user.currentGame}")
                 Text(text = "Bio: ${user.bio}")
+                Text(text = "City: ${user.nearestTown ?: "Unknown"}")
+                Text(text = user.distanceInMiles?.let { "Distance: ${it.roundToInt()} mi" }?: "Distance: Unknown")
             }
         }
     }
 
-    // converts backend User model to UI model
-    fun User.toLocalUser(): LocalUser {
+    // User.toLocalUser accesses profile coordinates and current user coordinates to calculate distance
+    // as the card appears in the feed
+    // Returns an instance of LocalUser with all associated information.
+    fun User.toLocalUser(context: Context): LocalUser {
+        val latitude = this.latitude ?: 0.0
+        val longitude = this.longitude ?: 0.0
+        val currentLat = currentLatitude ?: 0.0
+        val currentLon = currentLongitude ?: 0.0
+
+        val distance = if (currentLatitude != null && currentLongitude != null &&
+            this.latitude != null && this.longitude != null
+        ) {
+            calculateDistance(currentLat, currentLon, latitude, longitude)
+        } else null
+
         return LocalUser(
             userId = user_id,
             gamertag = gamertag,
@@ -230,7 +360,14 @@ class PeopleFragment : Fragment() {
             age = age,
             preferredPlaystyle = preferred_playstyle,
             currentGame = current_game,
-            bio = bio
+            bio = bio,
+            latitude = latitude,
+            longitude = longitude,
+            nearestTown = getNearestTown(context, latitude, longitude),
+            distanceInMiles = distance
         )
     }
-}
+    companion object {
+        private const val LOCATION_PERMISSION_REQUEST_CODE = 1001 // Location permissions require a request code.
+    }
+    }

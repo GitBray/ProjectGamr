@@ -14,7 +14,9 @@ name varchar(25),
 age INT,
 preferred_playstyle varchar(15),
 current_game varchar(30),
-bio TEXT
+bio TEXT,
+latitude DECIMAL(9,6),
+longitude DECIMAL(9,6)
 );
 
 CREATE TABLE region(
@@ -40,20 +42,22 @@ PRIMARY KEY (swiper_id, swipee_id),
 FOREIGN KEY (swiper_id) REFERENCES users(user_id),
 FOREIGN KEY (swipee_id) REFERENCES users(user_id)
 );
--- inserts "users" into the database
-INSERT INTO users (gamertag, name, age, preferred_playstyle, current_game, bio)
-VALUES
-('theRealBatman', 'Gage', 21, 'Casual', 'Arkham Knight', 'Justice for Gotham'),
-('BananaJoe', 'Joe', 23, 'Competitive', 'Call of Duty: Black Ops 6', 'Need a group.'),
-('KillerQueen21', 'Eva', 19, 'Competitive', 'Valorant', 'Help me climb the ranks.'),
-('UnitMan', 'Luke', 27, 'Casual', 'Stardew Valley', 'Let me show you my town.'),
-('FireGamer69', 'John', 21, 'Casual', 'Palworld', 'Help me explore the world because I keep dying.'),
-('GamingValkyrie', 'Elizabeth', 20, 'Competitive', 'Valorant', 'Looking to help climb the ranks.'),
-('GokuMain420', 'Dan', 24, 'Competitive', 'Dragon Ball Fighters', 'Looking for strong opponents to fight.'),
-('SakuraPetal333', 'Mary', 22, 'Casual', 'Garry\'s Mod', 'Looking for someone to make maps with.'),
-('CapMerica', 'Ethan', 21, 'Competitive', 'Marvel Rivals', 'I need a group to play with.'),
-('PinkPower34512', 'Sarah', 18, 'Competitive', 'Super Smash Bros Ultimate', 'I need help with combos, can someone please teach me.');
 
+INSERT INTO users (gamertag, name, age, preferred_playstyle, current_game, bio, latitude, longitude)
+VALUES
+('theRealBatman', 'Gage', 21, 'Casual', 'Arkham Knight', 'Justice for Gotham', 32.5282, -92.6379), -- Ruston, LA
+('BananaJoe', 'Joe', 23, 'Competitive', 'Call of Duty: Black Ops 6', 'Need a group.', 32.5053, -92.7064), -- Grambling, LA
+('KillerQueen21', 'Eva', 19, 'Competitive', 'Valorant', 'Help me climb the ranks.', 32.5368, -92.0454), -- Monroe, LA
+('UnitMan', 'Luke', 27, 'Casual', 'Stardew Valley', 'Let me show you my town.', 32.6178, -93.7473), -- Shreveport, LA
+('FireGamer69', 'John', 21, 'Casual', 'Palworld', 'Help me explore the world because I keep dying.', 32.6032, -93.7321), -- Bossier City, LA
+('GamingValkyrie', 'Elizabeth', 20, 'Competitive', 'Valorant', 'Looking to help climb the ranks.', 32.4900, -92.4132), -- Farmerville, LA
+('GokuMain420', 'Dan', 24, 'Competitive', 'Dragon Ball Fighters', 'Looking for strong opponents to fight.', 32.8120, -93.2830), -- Minden, LA
+('SakuraPetal333', 'Mary', 22, 'Casual', 'Garry\'s Mod', 'Looking for someone to make maps with.', 32.7643, -91.8729), -- Bastrop, LA
+('CapMerica', 'Ethan', 21, 'Competitive', 'Marvel Rivals', 'I need a group to play with.', 32.6918, -92.6376), -- Winnfield, LA
+('PinkPower34512', 'Sarah', 18, 'Competitive', 'Super Smash Bros Ultimate', 'I need help with combos, can someone please teach me.', 32.1555, -93.0995), -- Natchitoches, LA
+('GrizzlyGamer', 'Ros', '21', 'Competitive', 'Street Fighter 6', 'Fight me', 32.0593, -93.6991), -- Mansfield, LA
+('Dactyl', 'Abby', '19', 'Competitive', 'Overwatch 2', 'Pocket me', 32.7820, -92.1481), -- West Monroe, LA
+('C4ndyMAN19', 'Dakota', '22', 'Casual', 'Dead by Daylight', 'Unhook me', 32.2615, -92.7091); -- Jonesboro, LA
 -- Confirm users exist
 SELECT user_id, gamertag FROM users WHERE user_id IN (1, 5);
 
