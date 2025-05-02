@@ -14,8 +14,14 @@ import retrofit2.Callback
 import retrofit2.Response
 import com.example.GamrUI.UserProfile
 import com.example.GamrUI.GenericResponse
-
-
+import android.content.Intent
+import android.net.Uri
+import androidx.appcompat.app.AppCompatActivity
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.asRequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
+import java.io.File
 
 
 class ProfileFragment : Fragment() {
@@ -24,6 +30,10 @@ class ProfileFragment : Fragment() {
     private lateinit var editTextDiscord: EditText
     private lateinit var editTextInstagram: EditText
     private lateinit var spinnerStyle: Spinner
+
+    private val PICK_IMAGE_REQUEST = 1001
+    private var selectedImageUri: Uri? = null
+    private lateinit var imageView: ImageView
 
     private val userId = 1 // Replace with real logged-in user ID
 
@@ -38,6 +48,15 @@ class ProfileFragment : Fragment() {
         editTextInstagram = view.findViewById(R.id.editTextInstagram)
         spinnerStyle = view.findViewById(R.id.spinnerPlayingStyle)
 
+        imageView = view.findViewById(R.id.imageViewProfile)
+        val buttonSelectImage = view.findViewById<Button>(R.id.buttonSelectImage)
+
+        buttonSelectImage.setOnClickListener {
+            val intent = Intent(Intent.ACTION_GET_CONTENT)
+            intent.type = "image/*"
+            startActivityForResult(intent, PICK_IMAGE_REQUEST)
+        }
+
         view.findViewById<Button>(R.id.buttonSave).setOnClickListener { saveProfile() }
         view.findViewById<Button>(R.id.buttonDiscard).setOnClickListener { loadProfile() }
 
@@ -45,6 +64,66 @@ class ProfileFragment : Fragment() {
 
         return view
     }
+
+    private fun saveProfile() {
+        val bio = editTextBio.text.toString()
+        val discord = editTextDiscord.text.toString()
+        val instagram = editTextInstagram.text.toString()
+        val playStyle = spinnerStyle.selectedItem.toString()
+
+        // Convert strings to RequestBody
+        val userIdBody = userId.toString().toRequestBody("text/plain".toMediaTypeOrNull())
+        val bioBody = bio.toRequestBody("text/plain".toMediaTypeOrNull())
+        val discordBody = discord.toRequestBody("text/plain".toMediaTypeOrNull())
+        val instagramBody = instagram.toRequestBody("text/plain".toMediaTypeOrNull())
+        val playStyleBody = playStyle.toRequestBody("text/plain".toMediaTypeOrNull())
+
+        // Optional image part
+        val imagePart = selectedImageUri?.let { uri ->
+            val inputStream = requireContext().contentResolver.openInputStream(uri)!!
+            val tempFile = File(requireContext().cacheDir, "upload.jpg")
+            tempFile.outputStream().use { output -> inputStream.copyTo(output) }
+
+            val requestFile = tempFile.asRequestBody("image/*".toMediaTypeOrNull())
+            MultipartBody.Part.createFormData("image", tempFile.name, requestFile)
+        }
+
+        // Call Retrofit
+        RetrofitClient.apiService.updateProfileWithImage(
+            userIdBody,
+            bioBody,
+            discordBody,
+            instagramBody,
+            playStyleBody,
+            imagePart  // can be null!
+        ).enqueue(object : Callback<GenericResponse> {
+            override fun onResponse(call: Call<GenericResponse>, response: Response<GenericResponse>) {
+                val result = response.body()
+                if (result?.status == "success") {
+                    Toast.makeText(context, "Profile updated successfully", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(context, "Update failed: ${result?.message}", Toast.LENGTH_SHORT).show()
+                }
+            }
+
+            override fun onFailure(call: Call<GenericResponse>, t: Throwable) {
+                Toast.makeText(context, "Network error: ${t.message}", Toast.LENGTH_SHORT).show()
+            }
+        })
+    }
+
+
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == PICK_IMAGE_REQUEST && resultCode == AppCompatActivity.RESULT_OK) {
+            selectedImageUri = data?.data
+            selectedImageUri?.let {
+                imageView.setImageURI(it)
+            }
+        }
+    }
+
 
     private fun loadProfile() {
         RetrofitClient.apiService.getProfile(userId).enqueue(object : Callback<UserProfile> {
@@ -63,28 +142,5 @@ class ProfileFragment : Fragment() {
                 Toast.makeText(context, "Failed to load profile", Toast.LENGTH_SHORT).show()
             }
         })
-    }
-
-    private fun saveProfile() {
-        val bio = editTextBio.text.toString()
-        val discord = editTextDiscord.text.toString()
-        val instagram = editTextInstagram.text.toString()
-        val playStyle = spinnerStyle.selectedItem.toString()
-
-        RetrofitClient.apiService.updateProfile(userId, bio, discord, instagram, playStyle)
-            .enqueue(object : Callback<GenericResponse> {
-                override fun onResponse(call: Call<GenericResponse>, response: Response<GenericResponse>) {
-                    val res = response.body()
-                    if (res?.status == "success") {
-                        Toast.makeText(context, "Profile updated!", Toast.LENGTH_SHORT).show()
-                    } else {
-                        Toast.makeText(context, "Update failed: ${res?.message}", Toast.LENGTH_SHORT).show()
-                    }
-                }
-
-                override fun onFailure(call: Call<GenericResponse>, t: Throwable) {
-                    Toast.makeText(context, "Error saving profile", Toast.LENGTH_SHORT).show()
-                }
-            })
     }
 }

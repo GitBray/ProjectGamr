@@ -25,6 +25,8 @@ class ExploreFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        // Each value is made for calling from FilterViewModel to connect the buttons
+        // from the explore fragment and have it affect the people fragment
         val casualButton = view.findViewById<Button>(R.id.casualButton)
         val competitiveButton = view.findViewById<Button>(R.id.competitiveButton)
         val rankedButton = view.findViewById<Button>(R.id.rankedButton)

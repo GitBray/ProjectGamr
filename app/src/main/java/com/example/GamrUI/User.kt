@@ -1,4 +1,5 @@
 package com.example.GamrUI
+import java.io.Serializable
 
 // maps user profile pulled from database
 data class User(
@@ -12,4 +13,6 @@ data class User(
     val bio: String,
     val latitude: Double?,
     val longitude: Double?
-)
+): Serializable
+// the addition of serializable allows for the use of 'Bundle' to
+// access this class in other fragments.

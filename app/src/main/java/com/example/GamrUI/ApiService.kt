@@ -7,6 +7,11 @@ import retrofit2.http.Field
 import retrofit2.http.FormUrlEncoded
 import retrofit2.http.Query
 import retrofit2.Call
+import okhttp3.MultipartBody
+import okhttp3.RequestBody
+import retrofit2.http.Multipart
+import retrofit2.http.Part
+
 
 
 //This file defines all HTTP requests the app makes to the backend
@@ -66,6 +71,17 @@ interface ApiService {
     fun getProfile(
         @Query("user_id") userId: Int
     ): Call<UserProfile>
+
+    @Multipart
+    @POST("update.php")  // Replace with real PHP file name
+    fun updateProfileWithImage(
+        @Part("user_id") userId: RequestBody,
+        @Part("bio") bio: RequestBody,
+        @Part("discord") discord: RequestBody,
+        @Part("instagram") instagram: RequestBody,
+        @Part("playing_style") playingStyle: RequestBody,
+        @Part image: MultipartBody.Part?
+    ): Call<GenericResponse>
 
 
 }
