@@ -24,9 +24,6 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.File
 
 
-
-
-
 class ProfileFragment : Fragment() {
 
     private lateinit var editTextBio: EditText

@@ -7,7 +7,7 @@ import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import com.google.android.material.bottomnavigation.BottomNavigationView
-import com.example.GamrUI.fragments.ChatFragment
+import com.example.GamrUI.fragments.MatchListFragment
 import com.example.GamrUI.fragments.ExploreFragment
 import com.example.GamrUI.fragments.PeopleFragment
 import com.example.GamrUI.fragments.ProfileFragment
@@ -32,7 +32,7 @@ class MainActivity : AppCompatActivity() { // the use of AppCompatActivity fixed
             val selectedFragment: Fragment = when (item.itemId) {
                 R.id.navigation_people -> PeopleFragment()
                 R.id.navigation_explore -> ExploreFragment()
-                R.id.navigation_chat -> ChatFragment()
+                R.id.navigation_chat -> MatchListFragment()
                 R.id.navigation_profile -> ProfileFragment()
                 else -> PeopleFragment() // PeopleFragment is 'home page'
             }
