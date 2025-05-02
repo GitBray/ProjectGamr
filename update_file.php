@@ -1,5 +1,6 @@
 <?php
-// Assistance from ChatGPT
+// update_file.php
+// Updates a user's profile: text fields (bio, discord, instagram, preferred_playstyle) and/or profile image.
 
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: POST, GET, OPTIONS");
@@ -11,7 +12,8 @@ $target_dir = "uploads/";
 // DB connection
 $conn = new mysqli("localhost", "root", "ZAQ!1qazXSW@2wsx", "gamr");
 if ($conn->connect_error) {
-    die(json_encode(["status" => "error", "message" => "DB connection failed"]));
+    echo json_encode(["status" => "error", "message" => "DB connection failed"]);
+    exit;
 }
 
 // Only accept POST
@@ -22,20 +24,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
-    // Update profile fields if present
     $bio = $_POST['bio'] ?? null;
     $discord = $_POST['discord'] ?? null;
     $instagram = $_POST['instagram'] ?? null;
-    $playingStyle = $_POST['playing_style'] ?? null;
+    $preferredPlaystyle = $_POST['playing_style'] ?? null;
 
-    if ($bio !== null && $discord !== null && $instagram !== null && $playingStyle !== null) {
-        $stmt = $conn->prepare("UPDATE users SET bio=?, discord=?, instagram=?, playing_style=? WHERE user_id=?");
-        $stmt->bind_param("ssssi", $bio, $discord, $instagram, $playingStyle, $userId);
-        $stmt->execute();
+    $updated = false;
+
+    // Update profile fields if provided
+    if ($bio !== null && $discord !== null && $instagram !== null && $preferredPlaystyle !== null) {
+        $stmt = $conn->prepare("UPDATE users SET bio = ?, discord = ?, instagram = ?, preferred_playstyle = ? WHERE user_id = ?");
+        $stmt->bind_param("ssssi", $bio, $discord, $instagram, $preferredPlaystyle, $userId);
+        if ($stmt->execute()) {
+            $updated = true;
+        }
         $stmt->close();
     }
 
-    // If image is uploaded
+    // If an image is uploaded
     if (isset($_FILES['image'])) {
         if (!file_exists($target_dir)) {
             mkdir($target_dir, 0755, true);
@@ -45,14 +51,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $image_name = uniqid("profile_") . "_" . basename($image["name"]);
         $target_file = $target_dir . $image_name;
 
-        // Move new file
         if (move_uploaded_file($image["tmp_name"], $target_file)) {
-            // Build public URL
+            // Construct full public URL
             $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? "https" : "http";
             $host = $_SERVER['HTTP_HOST'];
             $image_url = "$protocol://$host/$target_file";
 
-            // Fetch old image to delete
+            // Delete old image if exists
             $getOld = $conn->prepare("SELECT image_url FROM users WHERE user_id = ?");
             $getOld->bind_param("i", $userId);
             $getOld->execute();
@@ -61,25 +66,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $getOld->close();
 
             if (!empty($oldRow['image_url'])) {
-                $oldPath = parse_url($oldRow['image_url'], PHP_URL_PATH); // gets "/uploads/filename.jpg"
+                $oldPath = parse_url($oldRow['image_url'], PHP_URL_PATH); // e.g., /uploads/profile_xyz.jpg
                 $oldFullPath = $_SERVER['DOCUMENT_ROOT'] . $oldPath;
                 if (file_exists($oldFullPath)) {
-                    unlink($oldFullPath); // delete old image file
+                    unlink($oldFullPath); // Delete old image
                 }
             }
 
-            // Save new image URL
+            // Update DB with new image URL
             $stmt = $conn->prepare("UPDATE users SET image_url = ? WHERE user_id = ?");
             $stmt->bind_param("si", $image_url, $userId);
-            $stmt->execute();
+            if ($stmt->execute()) {
+                $updated = true;
+            }
             $stmt->close();
-
-            echo json_encode(["status" => "success", "message" => "Profile updated", "image_url" => $image_url]);
         } else {
             echo json_encode(["status" => "fail", "message" => "Image upload failed"]);
+            exit;
         }
+    }
+
+    // Return final result
+    if ($updated) {
+        echo json_encode(["status" => "success", "message" => "Profile updated"]);
     } else {
-        echo json_encode(["status" => "success", "message" => "Profile updated (no image uploaded)"]);
+        echo json_encode(["status" => "no_change", "message" => "No fields updated"]);
     }
 }
 
