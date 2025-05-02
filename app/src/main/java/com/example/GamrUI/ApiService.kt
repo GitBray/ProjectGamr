@@ -33,15 +33,17 @@ interface ApiService {
         @Field("direction") direction: String
     ): Response<Map<String, Any>>
 
-    @FormUrlEncoded
-    @POST("update_profile.php")
-    fun updateProfile(
-        @Field("user_id") userId: String,
-        @Field("bio") bio: String,
-        @Field("discord") discord: String,
-        @Field("instagram") instagram: String,
-        @Field("playing_style") playingStyle: String
-    ): Call<UpdateResponse>
+    @Multipart
+    @POST("update_file.php")
+    fun updateProfileWithImage(
+        @Part("user_id") userId: RequestBody,
+        @Part("bio") bio: RequestBody,
+        @Part("discord") discord: RequestBody,
+        @Part("instagram") instagram: RequestBody,
+        @Part("playing_style") playingStyle: RequestBody,
+        @Part image: MultipartBody.Part?
+    ): Call<GenericResponse>
+
 
     @FormUrlEncoded
     @POST("send_message.php")
@@ -64,24 +66,13 @@ interface ApiService {
         @Field("bio") bio: String,
         @Field("discord") discord: String,
         @Field("instagram") instagram: String,
-        @Field("playing_style") playStyle: String
+        @Field("preferred_playstyle") playStyle: String
     ): Call<GenericResponse>
 
     @GET("get_profile.php")
     fun getProfile(
         @Query("user_id") userId: Int
     ): Call<UserProfile>
-
-    @Multipart
-    @POST("update.php")  // Replace with real PHP file name
-    fun updateProfileWithImage(
-        @Part("user_id") userId: RequestBody,
-        @Part("bio") bio: RequestBody,
-        @Part("discord") discord: RequestBody,
-        @Part("instagram") instagram: RequestBody,
-        @Part("playing_style") playingStyle: RequestBody,
-        @Part image: MultipartBody.Part?
-    ): Call<GenericResponse>
 
 
 }

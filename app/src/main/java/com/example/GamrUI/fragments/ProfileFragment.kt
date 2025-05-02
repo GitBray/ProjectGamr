@@ -134,7 +134,7 @@ class ProfileFragment : Fragment() {
                 editTextInstagram.setText(profile.instagram)
 
                 val styles = resources.getStringArray(R.array.playing_styles)
-                val index = styles.indexOfFirst { it.equals(profile.playing_style, ignoreCase = true) }
+                val index = styles.indexOfFirst { it.equals(profile.preferred_playstyle, ignoreCase = true) }
                 if (index >= 0) spinnerStyle.setSelection(index)
             }
 
