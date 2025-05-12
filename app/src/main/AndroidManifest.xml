@@ -8,6 +8,10 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
 
     <!-- Despite the fact we don't use coarse location, both permissions are necessary -->
 
@@ -38,6 +42,16 @@
             android:exported="true"
             android:theme="@style/Theme.MaterialComponents.DayNight.NoActionBar">
         </activity>
+
+        <!-- Pushy Message Receiver -->
+        <receiver
+            android:name=".MyNotificationReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="me.pushy.sdk.Pushy.MESSAGE" />
+            </intent-filter>
+        </receiver>
+
 
     </application>
 
