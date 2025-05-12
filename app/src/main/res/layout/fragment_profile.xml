@@ -7,8 +7,8 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
         android:gravity="center_horizontal"
+        android:orientation="vertical"
         android:spacing="16dp">
 
         <ImageView
@@ -32,10 +32,10 @@
             android:id="@+id/textViewPlayStyleLabel"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
             android:text="Select Your Play Style"
             android:textSize="18sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="8dp" />
+            android:textStyle="bold" />
 
         <Spinner
             android:id="@+id/spinnerPlayingStyle"
@@ -47,40 +47,41 @@
             android:id="@+id/editTextBio"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:gravity="top|start"
             android:hint="Enter your Bio"
             android:inputType="textMultiLine"
-            android:minLines="3"
-            android:gravity="top|start"
-            android:layout_marginTop="24dp" />
+            android:minLines="3" />
 
         <EditText
             android:id="@+id/editTextDiscord"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
             android:hint="Enter your Discord username"
-            android:inputType="textPersonName"
-            android:layout_marginTop="16dp" />
+            android:inputType="textPersonName" />
 
         <EditText
             android:id="@+id/editTextInstagram"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
             android:hint="Enter your Instagram username"
-            android:inputType="textPersonName"
-            android:layout_marginTop="16dp" />
+            android:inputType="textPersonName" />
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
+            android:layout_marginTop="32dp"
             android:gravity="center"
-            android:layout_marginTop="32dp">
+            android:orientation="horizontal">
+
             <Button
                 android:id="@+id/buttonSave"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="SAVE"
-                android:layout_marginEnd="16dp" />
+                android:layout_marginEnd="16dp"
+                android:text="SAVE" />
 
             <Button
                 android:id="@+id/buttonDiscard"
