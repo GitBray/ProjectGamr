@@ -35,7 +35,7 @@ class ProfileFragment : Fragment() {
     private var selectedImageUri: Uri? = null
     private lateinit var imageView: ImageView
 
-    private val userId = 1 // Replace with real logged-in user ID
+    private val userId = 2 // Replace with real logged-in user ID
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
