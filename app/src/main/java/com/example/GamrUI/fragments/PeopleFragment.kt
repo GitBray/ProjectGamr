@@ -126,7 +126,14 @@ class PeopleFragment : Fragment() {
 
     @Composable
     fun ProfileFeedScreen() {
-        val currentUserId = 1 // Sets user to TheRealBatman
+        val sharedPref = requireActivity().getSharedPreferences("GamrPrefs", Context.MODE_PRIVATE)
+        val currentUserId = sharedPref.getInt("user_id", -1)
+
+        if(currentUserId == -1) {
+            Log.e("AUTH", "User ID not found. Redirect to login maybe?")
+            return
+        }
+
         val swipeHistory = remember { mutableStateListOf<Swipe>() }
         var allUsers by remember { mutableStateOf<List<User>>(emptyList()) }
         val coroutineScope = rememberCoroutineScope()

@@ -12,15 +12,19 @@ import okhttp3.RequestBody
 import retrofit2.http.Multipart
 import retrofit2.http.Part
 
-// This file defines all HTTP requests the app makes to the backend
-// Each function corresponds to a PHP file in the XAMPP server
-interface ApiService {
 
+
+//This file defines all HTTP requests the app makes to the backend
+//Retrofit uses this interface to generate the actual network call code behind the scenes.
+//Each function corresponds to a PHP file in the XAMPP server
+
+interface ApiService {
     @GET("get_feed.php")
     suspend fun getUserFeed(
         @Query("user_id") userId: Int
     ): Response<List<User>>
 
+    //
     @POST("submit_swipe.php")
     @FormUrlEncoded
     suspend fun submitSwipe(
@@ -39,6 +43,7 @@ interface ApiService {
         @Part("playing_style") playingStyle: RequestBody,
         @Part image: MultipartBody.Part?
     ): Call<GenericResponse>
+
 
     @FormUrlEncoded
     @POST("send_message.php")
@@ -69,11 +74,20 @@ interface ApiService {
         @Query("user_id") userId: Int
     ): Call<UserProfile>
 
-    // Save Pushy Device Token to the server
     @FormUrlEncoded
-    @POST("save_token.php")
-    fun saveDeviceToken(
-        @Field("user_id") userId: Int,
-        @Field("device_token") deviceToken: String
+    @POST("register.php")
+    fun registerUser(
+        @Field("username") username: String,
+        @Field("password") password: String
     ): Call<GenericResponse>
+
+    @FormUrlEncoded
+    @POST("login.php")
+    fun loginUser(
+        @Field("username") username: String,
+        @Field("password") password: String
+    ): Call<GenericResponse>
+
+
 }
+
