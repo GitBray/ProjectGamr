@@ -16,6 +16,7 @@ import com.example.GamrUI.UserProfile
 import com.example.GamrUI.GenericResponse
 import android.content.Intent
 import android.net.Uri
+import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
@@ -35,7 +36,10 @@ class ProfileFragment : Fragment() {
     private var selectedImageUri: Uri? = null
     private lateinit var imageView: ImageView
 
-    private val userId = 2 // Replace with real logged-in user ID
+    private fun getUserId(): Int{
+        val sharedPref = requireActivity().getSharedPreferences("GamrPrefs", AppCompatActivity.MODE_PRIVATE)
+        return sharedPref.getInt("user_id", -1)
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -66,6 +70,12 @@ class ProfileFragment : Fragment() {
     }
 
     private fun saveProfile() {
+        val userId = getUserId()
+        if (userId == -1){
+            Toast.makeText(context, "User not logged in", Toast.LENGTH_SHORT).show()
+            return
+        }
+
         val bio = editTextBio.text.toString()
         val discord = editTextDiscord.text.toString()
         val instagram = editTextInstagram.text.toString()
@@ -126,6 +136,12 @@ class ProfileFragment : Fragment() {
 
 
     private fun loadProfile() {
+        val userId = getUserId()
+        if (userId == -1){
+            Toast.makeText(context, "User not logged in", Toast.LENGTH_SHORT).show()
+            return
+        }
+
         RetrofitClient.apiService.getProfile(userId).enqueue(object : Callback<UserProfile> {
             override fun onResponse(call: Call<UserProfile>, response: Response<UserProfile>) {
                 val profile = response.body() ?: return
@@ -136,6 +152,8 @@ class ProfileFragment : Fragment() {
                 val styles = resources.getStringArray(R.array.playing_styles)
                 val index = styles.indexOfFirst { it.equals(profile.preferred_playstyle, ignoreCase = true) }
                 if (index >= 0) spinnerStyle.setSelection(index)
+                Log.d("PROFILE_DEBUG", response.body().toString())
+
             }
 
             override fun onFailure(call: Call<UserProfile>, t: Throwable) {

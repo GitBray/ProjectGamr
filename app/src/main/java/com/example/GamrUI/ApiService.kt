@@ -74,6 +74,20 @@ interface ApiService {
         @Query("user_id") userId: Int
     ): Call<UserProfile>
 
+    @FormUrlEncoded
+    @POST("register.php")
+    fun registerUser(
+        @Field("username") username: String,
+        @Field("password") password: String
+    ): Call<GenericResponse>
+
+    @FormUrlEncoded
+    @POST("login.php")
+    fun loginUser(
+        @Field("username") username: String,
+        @Field("password") password: String
+    ): Call<GenericResponse>
+
 
 }
 
