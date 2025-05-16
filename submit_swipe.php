@@ -1,78 +1,87 @@
 <?php
 // Assistance from ChatGPT
+header('Content-Type: application/json');
+error_reporting(0);
+ini_set('display_errors', 0); // removing error reporting fixed an issue I had with json reading the first output (Bray)
+                              // keeping the code here but I'll test more soon and probably remove this.
 
-header("Access-Control-Allow-Origin: *");
-header("Content-Type: application/json");
-
-// Database connection
-$conn = new mysqli("localhost", "root", "ZAQ!1qazXSW@2wsx", "gamr");
-
+$conn = new mysqli("localhost", "root", "passhere", "gamr");
 if ($conn->connect_error) {
-    die(json_encode(["error" => $conn->connect_error]));
-}
-
-// Grab POST/GET data
-$swiperId = $_POST['swiper_id'] ?? $_GET['swiper_id'] ?? null;
-$swipeeId = $_POST['swipee_id'] ?? $_GET['swipee_id'] ?? null;
-$direction = $_POST['direction'] ?? $_GET['direction'] ?? null;
-
-// Validate required fields
-if (!$swiperId || !$swipeeId || !$direction) {
-    echo json_encode([
-        "success" => false,
-        "error" => "Missing swiper_id, swipee_id, or direction"
-    ]);
+    echo json_encode(["success" => false, "message" => "Connection failed"]);
     exit;
 }
 
-// Insert or update the swipe
-$sql = "INSERT INTO swipes (swiper_id, swipee_id, direction)
-        VALUES ($swiperId, $swipeeId, '$direction')
-        ON DUPLICATE KEY UPDATE direction = '$direction'";
-
-$response = [];
-
-if ($conn->query($sql) === TRUE) {
-    $response["success"] = true;
-
-    // If it's a like, send push notification
-    if ($direction === "like") {
-        $stmt = $conn->prepare("SELECT device_token FROM users WHERE user_id = ?");
-        $stmt->bind_param("i", $swipeeId);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $row = $result->fetch_assoc();
-
-        if ($row && !empty($row['device_token'])) {
-            $deviceToken = $row['device_token'];
-
-            $data = [
-                "message" => "Someone liked you!"
-            ];
-
-            $post = [
-                "to" => $deviceToken,
-                "data" => $data
-            ];
-
-            $json = json_encode($post);
-
-            $ch = curl_init("https://api.pushy.me/push?api_key=d8964ce3bcd12ac237cd0a668ee8dbdd8f19b8bad398933ced24d548faac5498");
-            curl_setopt($ch, CURLOPT_POST, true);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, $json);
-            curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            $pushyResponse = curl_exec($ch);
-            curl_close($ch);
-
-            $response["pushy_status"] = "sent";
-        }
-    }
-} else {
-    $response["success"] = false;
-    $response["error"] = $conn->error;
+// Validate input
+if (!isset($_POST['swiper_id'], $_POST['swipee_id'], $_POST['direction'])) {
+    echo json_encode(["success" => false, "message" => "Missing required fields"]);
+    exit;
 }
 
-$conn->close();
+$swiper_id = intval($_POST['swiper_id']);
+$swipee_id = intval($_POST['swipee_id']);
+$direction = $_POST['direction'];
+
+$response = ["success" => true, "message" => "Swipe recorded"];
+
+error_log("Swipe received: $swiper_id -> $swipee_id ($direction)");
+
+// Insert or update swipe
+$sql = "INSERT INTO swipes (swiper_id, swipee_id, direction) VALUES (?, ?, ?)
+        ON DUPLICATE KEY UPDATE direction = VALUES(direction)";
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("iis", $swiper_id, $swipee_id, $direction);
+
+if (!$stmt->execute()) {
+    error_log("Failed to insert swipe");
+    echo json_encode(["success" => false, "message" => "Failed to record swipe"]);
+    exit;
+}
+
+error_log("Swipe saved");
+
+// Match checking is now handled in submit_swipe rather than another file!
+
+// Only check for match if direction is 'like'
+if ($direction === 'like') {
+    error_log("Checking for reverse like...");
+
+    $check_sql = "SELECT * FROM swipes 
+                  WHERE swiper_id = ? AND swipee_id = ? AND direction = 'like'";
+    $check_stmt = $conn->prepare($check_sql);
+    $check_stmt->bind_param("ii", $swipee_id, $swiper_id);
+    $check_stmt->execute();
+    $result = $check_stmt->get_result();
+
+    if ($result->num_rows > 0) {
+        error_log("Mutual like detected");
+
+        // Have a match key of both userids (lower value first)
+        $min = min($swiper_id, $swipee_id);
+        $max = max($swiper_id, $swipee_id);
+        $match_key = "{$min}_{$max}";
+
+        // Check if the match already exists
+        $match_check = $conn->prepare("SELECT match_id FROM matches WHERE match_key = ?");
+        $match_check->bind_param("s", $match_key);
+        $match_check->execute();
+        $match_check_result = $match_check->get_result();
+
+        if ($match_check_result->num_rows === 0) {
+
+            // Create the match
+            $insert_match = $conn->prepare("INSERT INTO matches (user1_id, user2_id, match_key) VALUES (?, ?, ?)");
+            $insert_match->bind_param("iis", $swiper_id, $swipee_id, $match_key);
+            if ($insert_match->execute()) {
+                error_log("Match created for $match_key");
+                $response["message"] = "Match created";
+            } else {
+                error_log("Failed to create match for $match_key");
+            }
+        } else {
+            error_log("Match already exists: $match_key");
+        }
+    }
+}
+
 echo json_encode($response);
 ?>
