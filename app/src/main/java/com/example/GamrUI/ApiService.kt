@@ -24,6 +24,11 @@ interface ApiService {
         @Query("user_id") userId: Int
     ): Response<List<User>>
 
+    @GET("get_matches.php")
+    fun getMatches(
+        @Query("user_id") userId: Int
+    ): Call<List<User>>
+
     //
     @POST("submit_swipe.php")
     @FormUrlEncoded

@@ -3,83 +3,108 @@ package com.example.GamrUI.fragments
 import android.os.Bundle
 import android.view.*
 import android.widget.TextView
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.commit
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.example.GamrUI.R
-import com.example.GamrUI.User
+import com.example.GamrUI.*
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
 class MatchListFragment : Fragment() {
 
-    // Dummy matches - same format as the database
-    // Pulls from the database will be implemented at a later time.
-    private val dummyMatches = listOf(
-        User(
-            user_id = 11,
-            gamertag = "GrizzlyGamer",
-            name = "Ros",
-            age = 21,
-            preferred_playstyle = "Competitive",
-            current_game = "Street Fighter 6",
-            current_game_genre = "Fighting",
-            bio = "Fight me.",
-            latitude = 32.0593,
-            longitude = -93.6991
-        ),
-        User(
-            user_id = 12,
-            gamertag = "Dactyl",
-            name = "Abby",
-            age = 19,
-            preferred_playstyle = "Competitive",
-            current_game = "Overwatch 2",
-            current_game_genre = "FPS",
-            bio = "Pocket me",
-            latitude = 32.7820,
-            longitude = -92.1481
-        )
-    )
+    private lateinit var recyclerView: RecyclerView
 
-    // Layout created in XML, inflate the XML it when Fragment is called
-    // Makes use of a RecyclerView, more efficient for long lists of matches.
+    // Inflates the fragment and creates the recycleview layout (see xml for more)
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         val view = inflater.inflate(R.layout.fragment_match_list, container, false)
-        val recyclerView = view.findViewById<RecyclerView>(R.id.matchRecyclerView)
+        recyclerView = view.findViewById(R.id.matchRecyclerView)
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
-        recyclerView.adapter = MatchAdapter(dummyMatches) { user ->
-            // When a user taps their match, a new instance of ChatWindowFragment is created.
-            parentFragmentManager.commit {
-                replace(R.id.fragment_container, ChatWindowFragment.newInstance(user))
-                addToBackStack(null) // allows for android's back button to work on chats
-            }
-        }
+
+        // loads matches from the database
+        loadMatches()
+
         return view
     }
 
-    // MatchAdapter binds user data to the xml file item_match.xml
-    // item_match.xml is the object for 'match' cards
+    // Retrieve a user's matches from the database.
+    private fun loadMatches() {
+        val sharedPref = requireActivity().getSharedPreferences("GamrPrefs", android.content.Context.MODE_PRIVATE)
+        val currentUserId = sharedPref.getInt("user_id", -1)
+
+        // Assistance from ChatGPT reccomended this failsafe for if no user is logged in.
+        // Error checking doesn't hurt, but I've yet to access this page without logging in.
+        if (currentUserId == -1) {
+            Toast.makeText(requireContext(), "Not logged in", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        // Call get_matches.php through retrofit.
+        RetrofitClient.apiService.getMatches(currentUserId)
+            .enqueue(object : Callback<List<User>> {
+                override fun onResponse(call: Call<List<User>>, response: Response<List<User>>) {
+                    if (response.isSuccessful) {
+                        val matches = response.body()?.toMutableList() ?: mutableListOf()
+
+                        // Single dummy match for visual / testing purposes
+                        val dummyUser = User(
+                            user_id = 999,
+                            gamertag = "GamrDev",
+                            name = "Dev",
+                            age = 99,
+                            preferred_playstyle = "Casual",
+                            current_game = "Developing Gamr",
+                            current_game_genre = "Testing",
+                            bio = "I'm here for test cases",
+                            latitude = null,
+                            longitude = null
+                        )
+                        matches.add(dummyUser)
+
+                        // Recyclerviews are good for long scrollable lists.
+                        // When a user taps their match, open the ChatWindowFragment
+                        recyclerView.adapter = MatchAdapter(matches) { user ->
+                            parentFragmentManager.commit {
+                                replace(R.id.fragment_container, ChatWindowFragment.newInstance(user))
+                                addToBackStack(null) // allows user to use android's "back" button
+                            }
+                        }
+                    } else {
+                        // error handling
+                        Toast.makeText(requireContext(), "Failed to load matches", Toast.LENGTH_SHORT).show()
+                    }
+                }
+
+                // have toast show api error
+                override fun onFailure(call: Call<List<User>>, t: Throwable) {
+                    Toast.makeText(requireContext(), "Error: ${t.message}", Toast.LENGTH_SHORT).show()
+                }
+            })
+    }
+
+    // binds matched users to their cards
     class MatchAdapter(
         private val matches: List<User>,
         private val onItemClick: (User) -> Unit
     ) : RecyclerView.Adapter<MatchAdapter.MatchViewHolder>() {
 
+        // defines the included fields for each card
         class MatchViewHolder(view: View) : RecyclerView.ViewHolder(view) {
             val username: TextView = view.findViewById(R.id.matchUsername)
             val game: TextView = view.findViewById(R.id.matchGame)
             val style: TextView = view.findViewById(R.id.matchStyle)
-
         }
 
-        // inflates the item_match.xml item into the RecyclerView
+        // inflate the item_match.xml for each card
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MatchViewHolder {
             val view = LayoutInflater.from(parent.context)
                 .inflate(R.layout.item_match, parent, false)
             return MatchViewHolder(view)
         }
 
-        // actually binds the user data and listens for a click
-        // click passes which user was clicked as it's parameter
+        // insert the data and listen for a click to send to the chat window
         override fun onBindViewHolder(holder: MatchViewHolder, position: Int) {
             val user = matches[position]
             holder.username.text = user.gamertag
@@ -87,7 +112,7 @@ class MatchListFragment : Fragment() {
             holder.style.text = "Style: ${user.preferred_playstyle}"
             holder.itemView.setOnClickListener { onItemClick(user) }
         }
-        override fun getItemCount() = matches.size // item count tells RecyclerView how many items
-                                                  // it's working with
+
+        override fun getItemCount() = matches.size
     }
 }

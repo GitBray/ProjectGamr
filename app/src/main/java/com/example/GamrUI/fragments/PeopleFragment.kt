@@ -20,6 +20,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.unit.IntOffset
 import android.content.Context
+import android.widget.Toast
 import java.util.*
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
@@ -158,6 +159,7 @@ class PeopleFragment : Fragment() {
         }
 
         // Handles user's choice on another user and sends it to the server
+        // Now also checks if the swipe was a match by checking the feedback from submit_swipe.php
         fun handleSwipe(swipee: User, direction: String) {
             val swipe = Swipe(
                 swiperId = currentUserId,
@@ -170,13 +172,20 @@ class PeopleFragment : Fragment() {
 
             coroutineScope.launch {
                 try {
-                    val response = RetrofitClient.apiService.submitSwipe(
+                    val response = RetrofitClient.apiService.submitSwipe( // initialize submit_swipe.php
                         swiperId = currentUserId,
                         swipeeId = swipee.user_id,
                         direction = direction
                     )
-                    if (response.isSuccessful && response.body()?.get("success") == true) {
-                        Log.d("API", "Swipe sent successfully!")
+                    if (response.isSuccessful) {
+                        val body = response.body() // check the output of submit_swipe
+                        Log.d("API", "Swipe response: $body") // body will be 'swiped left/right' unless it is a match
+
+
+                        if (body?.get("message") == "Match created") { // body is "Match created" if both users swiped right
+
+                            Toast.makeText(requireContext(), "It's a Match!", Toast.LENGTH_SHORT).show() //toast shows text at bottom of screen
+                        }                                                                                // Brayden will replace it with a card for redirect to matches shortly
                     } else {
                         Log.e("API", "Swipe failed: ${response.errorBody()?.string()}")
                     }

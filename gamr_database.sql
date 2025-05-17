@@ -122,6 +122,10 @@ UPDATE users SET current_game_genre = 'Racing' WHERE current_game = 'Mario Kart'
 -- sets it back for safty
 SET SQL_SAFE_UPDATES = 1;
 
+-- RESET LIKES AND MATCHES FOR TESTING
+DELETE FROM matches;
+DELETE FROM swipes;
+
 -- adds text bio's, discord, insta, playstyle
 ALTER TABLE users
 ADD COLUMN discord VARCHAR(255),
