@@ -12,7 +12,8 @@ data class User(
     val current_game_genre: String,
     val bio: String,
     val latitude: Double?,
-    val longitude: Double?
+    val longitude: Double?,
+    val image_url: String?
 ): Serializable
 // the addition of serializable allows for the use of 'Bundle' to
 // access this class in other fragments.

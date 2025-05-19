@@ -59,7 +59,8 @@ class MatchListFragment : Fragment() {
                             current_game_genre = "Testing",
                             bio = "I'm here for test cases",
                             latitude = null,
-                            longitude = null
+                            longitude = null,
+                            image_url = null
                         )
                         matches.add(dummyUser)
 
