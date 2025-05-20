@@ -59,7 +59,7 @@ dependencies {
     implementation(libs.androidx.navigation.ui.ktx)
 
     // Google Services
-    implementation("com.google.android.material:material:1.9.0")
+    implementation("com.google.android.material:material:1.10.0")
     implementation("com.google.android.gms:play-services-location:21.1.0")
     implementation("com.google.android.gms:play-services-maps:17.0.1")
 
