@@ -401,12 +401,12 @@ class PeopleFragment : Fragment() {
 
         return LocalUser(
             userId = user_id,
-            gamertag = gamertag,
-            name = name,
-            age = age,
-            preferredPlaystyle = preferred_playstyle,
-            currentGame = current_game,
-            bio = bio,
+            gamertag = gamertag ?: "Unknown",
+            name = name ?: "Unknown",
+            age = age ?: 0,
+            preferredPlaystyle = preferred_playstyle ?: "Unknown",
+            currentGame = current_game ?: "Unknown",
+            bio = bio ?: "No bio yet.",
             latitude = latitude,
             longitude = longitude,
             nearestTown = getNearestTown(context, latitude, longitude),
@@ -414,6 +414,7 @@ class PeopleFragment : Fragment() {
             image_url = image_url
         )
     }
+
     companion object {
         private const val LOCATION_PERMISSION_REQUEST_CODE = 1001 // Location permissions require a request code.
     }
