@@ -1,35 +1,39 @@
 <?php
-// Assistance from ChatGPT 
+header('Content-Type: application/json');
+error_reporting(0);
+ini_set('display_errors', 0);
 
-header("Access-Control-Allow-Origin: *");
-header("Content-Type: application/json");
-
-// Connects to my MySQL database, needs to change the password to your password on MySQL!!
-$conn = new mysqli("localhost", "root", "ZAQ!1qazXSW@2wsx", "gamr");
-
-$uid1 = $_GET['user1'] ?? null;
-$uid2 = $_GET['user2'] ?? null;
-
-if (!$uid1 || !$uid2){
-    echo json_encode(["success" => false, "error" => "Missing user IDs"]);
+$conn = new mysqli("localhost", "root", "passhere", "gamr");
+if ($conn->connect_error) {
+    echo json_encode(["success" => false, "message" => "Connection failed"]);
     exit;
 }
 
-$uid1 = intval($uid1);
-$uid2 = intval($uid2);
+// Accept user1 and user2 from GET query params
+$user1 = isset($_GET['user1']) ? intval($_GET['user1']) : null;
+$user2 = isset($_GET['user2']) ? intval($_GET['user2']) : null;
 
-$sql = "SELECT * FROM messages WHERE (sender_id = $uid1 AND reciever_id = $uid2)
-            OR (sender_id = $uid2 AND reciever_id = $uid1) 
-            ORDER BY timestamp ASC";
+if ($user1 === null || $user2 === null) {
+    echo json_encode(["status" => "error", "message" => "Missing user IDs"]);
+    exit;
+}
 
-$result = $conn->query($sql);
+// Fetch all messages between user1 and user2
+$sql = "SELECT message_id, sender_id, reciever_id, message, TIMESTAMP as timestamp FROM messages 
+        WHERE (sender_id = ? AND reciever_id = ?) 
+           OR (sender_id = ? AND reciever_id = ?)
+        ORDER BY timestamp ASC";
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("iiii", $user1, $user2, $user2, $user1);
+$stmt->execute();
+
+$result = $stmt->get_result();
 $messages = [];
 
-while ($row = $result->fetch_assoc()){
+while ($row = $result->fetch_assoc()) {
     $messages[] = $row;
 }
 
+// Output clean JSON
 echo json_encode($messages);
-
-$conn->close();
 ?>

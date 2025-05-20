@@ -4,7 +4,7 @@
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json");
 
-$conn = new mysqli("localhost", "root", "ZAQ!1qazXSW@2wsx", "gamr");
+$conn = new mysqli("localhost", "root", "password here", "gamr");
 
 $userId = $_GET['user_id'] ?? null;
 

@@ -10,7 +10,7 @@ header("Content-Type: application/json");
 $target_dir = "uploads/";
 
 // DB connection
-$conn = new mysqli("localhost", "root", "ZAQ!1qazXSW@2wsx", "gamr");
+$conn = new mysqli("localhost", "root", "password here", "gamr");
 if ($conn->connect_error) {
     echo json_encode(["status" => "error", "message" => "DB connection failed"]);
     exit;

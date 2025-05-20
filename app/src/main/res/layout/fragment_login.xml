@@ -11,7 +11,7 @@
         android:id="@+id/emailField"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Email" />
+        android:hint="Username" />
 
     <!-- password input field -->
     <EditText

@@ -12,7 +12,7 @@ header("Access-Control-Allow-Headers: Content-Type");
 header("Content-Type: application/json");
 
 // Connect to DB
-$conn = new mysqli("localhost", "root", "ZAQ!1qazXSW@2wsx", "gamr");
+$conn = new mysqli("localhost", "root", "", "gamr");
 
 // Check connection
 if ($conn->connect_error) {

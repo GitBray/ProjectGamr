@@ -20,12 +20,14 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.unit.IntOffset
 import android.content.Context
-import android.widget.Toast
+import androidx.compose.foundation.background
+import androidx.compose.ui.graphics.Color
 import java.util.*
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.commit
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.example.GamrUI.ui.theme.GamrUITheme
@@ -36,6 +38,10 @@ import kotlinx.coroutines.launch
 import java.io.IOException
 import kotlin.math.pow
 import kotlin.math.roundToInt
+import com.example.GamrUI.R
+
+// ChatGPT assisted various aspects of this fragment
+// Particularly in regard to the card display/formatting, distance and map formulas, & animations
 
 // This is the local UI model for class LocalUser
 data class LocalUser(
@@ -49,7 +55,8 @@ data class LocalUser(
     val latitude: Double?,
     val longitude: Double?,
     val nearestTown: String?,
-    val distanceInMiles: Double? = null
+    val distanceInMiles: Double? = null,
+    val image_url: String?
 )
 
 
@@ -124,14 +131,13 @@ class PeopleFragment : Fragment() {
             Log.e("LOCATION", "Error: ${it.message}")
         }
     }
-
     @Composable
     fun ProfileFeedScreen() {
         val sharedPref = requireActivity().getSharedPreferences("GamrPrefs", Context.MODE_PRIVATE)
         val currentUserId = sharedPref.getInt("user_id", -1)
 
-        if(currentUserId == -1) {
-            Log.e("AUTH", "User ID not found. Redirect to login maybe?")
+        if (currentUserId == -1) {
+            Log.e("AUTH", "User ID not found.")
             return
         }
 
@@ -139,67 +145,47 @@ class PeopleFragment : Fragment() {
         var allUsers by remember { mutableStateOf<List<User>>(emptyList()) }
         val coroutineScope = rememberCoroutineScope()
 
-        val selectedPlaystles by filterViewModel.selectedPlaystyles.collectAsState()
+        // tracking variables for if the card should be shown
+        var showMatchCard by remember { mutableStateOf(false) }
+        var matchedUser by remember { mutableStateOf<User?>(null) }
+
+        val selectedPlaystyles by filterViewModel.selectedPlaystyles.collectAsState()
         val selectedGenres by filterViewModel.selectedGenres.collectAsState()
 
+        // Fetch user feed once when the screen is loaded
         LaunchedEffect(Unit) {
             coroutineScope.launch {
-                try {
-                    val response = RetrofitClient.apiService.getUserFeed(currentUserId)
-                    if (response.isSuccessful) {
-                        allUsers = response.body() ?: emptyList()
-                        Log.d("API", "Fetched ${allUsers.size} users")
-                    } else {
-                        Log.e("API", "Response error: ${response.code()}")
-                    }
-                } catch (e: Exception) {
-                    Log.e("API", "Exception: ${e.message}")
+                val response = RetrofitClient.apiService.getUserFeed(currentUserId)
+                if (response.isSuccessful) {
+                    allUsers = response.body() ?: emptyList()
+                    Log.d("API", "Fetched ${allUsers.size} users")
                 }
             }
         }
 
         // Handles user's choice on another user and sends it to the server
-        // Now also checks if the swipe was a match by checking the feedback from submit_swipe.php
         fun handleSwipe(swipee: User, direction: String) {
-            val swipe = Swipe(
-                swiperId = currentUserId,
-                swipeeId = swipee.user_id,
-                direction = direction
-            )
-            swipeHistory.add(swipe)
-
-            Log.d("SWIPE_TRACK", "Swiped $direction on ${swipee.gamertag}")
-
+            swipeHistory.add(Swipe(currentUserId, swipee.user_id, direction))
             coroutineScope.launch {
                 try {
-                    val response = RetrofitClient.apiService.submitSwipe( // initialize submit_swipe.php
-                        swiperId = currentUserId,
-                        swipeeId = swipee.user_id,
-                        direction = direction
+                    val response = RetrofitClient.apiService.submitSwipe(
+                        currentUserId,
+                        swipee.user_id,
+                        direction
                     )
-                    if (response.isSuccessful) {
-                        val body = response.body() // check the output of submit_swipe
-                        Log.d("API", "Swipe response: $body") // body will be 'swiped left/right' unless it is a match
-
-
-                        if (body?.get("message") == "Match created") { // body is "Match created" if both users swiped right
-
-                            Toast.makeText(requireContext(), "It's a Match!", Toast.LENGTH_SHORT).show() //toast shows text at bottom of screen
-                        }                                                                                // Brayden will replace it with a card for redirect to matches shortly
-                    } else {
-                        Log.e("API", "Swipe failed: ${response.errorBody()?.string()}")
+                    if (response.isSuccessful && response.body()?.get("message") == "Match created") {
+                        matchedUser = swipee
+                        showMatchCard = true
                     }
-                } catch (e: Exception) {
-                    Log.e("API", "Swipe error: ${e.message}")
-                }
+                } catch (_: Exception) {}
             }
         }
 
         // Filter out already swiped users and apply the playstyle and genre filters
         val recommendedUsers = allUsers.filter { user ->
-            swipeHistory.none { it.swipeeId == user.user_id && it.swiperId == currentUserId }
-                    && (selectedPlaystles.isEmpty() || selectedPlaystles.contains(user.preferred_playstyle))
-                    && (selectedGenres.isEmpty() || selectedGenres.contains(user.current_game_genre))
+            swipeHistory.none { it.swipeeId == user.user_id && it.swiperId == currentUserId } &&
+                    (selectedPlaystyles.isEmpty() || selectedPlaystyles.contains(user.preferred_playstyle)) &&
+                    (selectedGenres.isEmpty() || selectedGenres.contains(user.current_game_genre))
         }
 
         // Sort users by distance from the current user
@@ -211,47 +197,91 @@ class PeopleFragment : Fragment() {
                     calculateDistance(lat1, lon1, user.latitude ?: 0.0, user.longitude ?: 0.0)
                 }
             } ?: 0.0
-            user to distance // Pairs user with its calculated distance
-        }.sortedBy { it.second } // Sorts by distance in ascending order.
+            user to distance
+        }.sortedBy { it.second }
 
-        // Display users sorted by distance
-        if (sortedUsers.isNotEmpty()) {
-            val user = sortedUsers.first().first // First user will have shortest distance
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.SpaceBetween
-            ) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            // Display users sorted by distance
+            if (sortedUsers.isNotEmpty()) {
+                val user = sortedUsers.first().first
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        // Pass context to toLocalUser
+                        SwipeableProfileCard(
+                            user = user.toLocalUser(requireContext()),
+                            onSwipe = { direction -> handleSwipe(user, direction) }
+                        )
+                    }
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 16.dp),
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
+                        Button(onClick = { handleSwipe(user, "dislike") }) {
+                            Text("Dislike")
+                        }
+                        Button(onClick = { handleSwipe(user, "like") }) {
+                            Text("Like")
+                        }
+                    }
+                }
+            } else {
+                Text("No more users to display", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onBackground)
+            }
+
+            // Match card shown when a mutual like is detected
+            if (showMatchCard && matchedUser != null) {
                 Box(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f),
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = 0.6f)),
                     contentAlignment = Alignment.Center
                 ) {
-                    // Pass context to toLocalUser
-                    SwipeableProfileCard(
-                        user = user.toLocalUser(requireContext()),
-                        onSwipe = { direction -> handleSwipe(user, direction) }
-                    )
-                }
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 16.dp),
-                    horizontalArrangement = Arrangement.SpaceEvenly
-                ) {
-                    Button(onClick = { handleSwipe(user, "dislike") }) {
-                        Text("Dislike")
-                    }
-                    Button(onClick = { handleSwipe(user, "like") }) {
-                        Text("Like")
+                    Card(
+                        modifier = Modifier.fillMaxWidth(0.85f),
+                        elevation = CardDefaults.cardElevation(12.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(24.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text("🎮 It’s a Match!", style = MaterialTheme.typography.headlineSmall)
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text("You matched with ${matchedUser?.gamertag}!", style = MaterialTheme.typography.bodyLarge)
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Row(
+                                horizontalArrangement = Arrangement.SpaceEvenly,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Button(onClick = { showMatchCard = false }) {
+                                    Text("Keep Swiping")
+                                }
+                                Button(onClick = {
+                                    showMatchCard = false
+                                    parentFragmentManager.commit {
+                                        replace(R.id.fragment_container, ChatWindowFragment.newInstance(matchedUser!!))
+                                        addToBackStack(null)
+                                    }
+                                }) {
+                                    Text("Chat Now")
+                                }
+                            }
+                        }
                     }
                 }
             }
-        } else {
-            Text("No more users to display", style = MaterialTheme.typography.bodyLarge, color= MaterialTheme.colorScheme.onBackground)
         }
     }
 
@@ -380,7 +410,8 @@ class PeopleFragment : Fragment() {
             latitude = latitude,
             longitude = longitude,
             nearestTown = getNearestTown(context, latitude, longitude),
-            distanceInMiles = distance
+            distanceInMiles = distance,
+            image_url = image_url
         )
     }
     companion object {

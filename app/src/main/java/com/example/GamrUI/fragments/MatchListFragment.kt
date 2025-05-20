@@ -21,68 +21,60 @@ class MatchListFragment : Fragment() {
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         val view = inflater.inflate(R.layout.fragment_match_list, container, false)
         recyclerView = view.findViewById(R.id.matchRecyclerView)
+        val emptyText = view.findViewById<TextView>(R.id.emptyText) // if there are no matches, display this text
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
 
-        // loads matches from the database
-        loadMatches()
-
+        // call loadmatches to grab a user's matches
+        loadMatches { matches ->
+            if (matches.isEmpty()) { // if the matchlist is empty, hide the view
+                                    // and show the emptyText 'no matches'
+                recyclerView.visibility = View.GONE
+                emptyText.visibility = View.VISIBLE
+            } else {
+                recyclerView.visibility = View.VISIBLE
+                emptyText.visibility = View.GONE
+                recyclerView.adapter = MatchAdapter(matches) { user -> // pass matches to matchAdapter
+                    parentFragmentManager.commit { // when users taps a match, open ChatWindowFragment instance for the user.
+                        replace(R.id.fragment_container, ChatWindowFragment.newInstance(user))
+                        addToBackStack(null)
+                    }
+                }
+            }
+        }
         return view
     }
 
     // Retrieve a user's matches from the database.
-    private fun loadMatches() {
+    private fun loadMatches(onResult: (List<User>) -> Unit) {
         val sharedPref = requireActivity().getSharedPreferences("GamrPrefs", android.content.Context.MODE_PRIVATE)
         val currentUserId = sharedPref.getInt("user_id", -1)
 
-        // Assistance from ChatGPT reccomended this failsafe for if no user is logged in.
-        // Error checking doesn't hurt, but I've yet to access this page without logging in.
         if (currentUserId == -1) {
             Toast.makeText(requireContext(), "Not logged in", Toast.LENGTH_SHORT).show()
+            onResult(emptyList())
             return
         }
 
-        // Call get_matches.php through retrofit.
+        // call get_matches.php
         RetrofitClient.apiService.getMatches(currentUserId)
             .enqueue(object : Callback<List<User>> {
                 override fun onResponse(call: Call<List<User>>, response: Response<List<User>>) {
                     if (response.isSuccessful) {
-                        val matches = response.body()?.toMutableList() ?: mutableListOf()
-
-                        // Single dummy match for visual / testing purposes
-                        val dummyUser = User(
-                            user_id = 999,
-                            gamertag = "GamrDev",
-                            name = "Dev",
-                            age = 99,
-                            preferred_playstyle = "Casual",
-                            current_game = "Developing Gamr",
-                            current_game_genre = "Testing",
-                            bio = "I'm here for test cases",
-                            latitude = null,
-                            longitude = null
-                        )
-                        matches.add(dummyUser)
-
-                        // Recyclerviews are good for long scrollable lists.
-                        // When a user taps their match, open the ChatWindowFragment
-                        recyclerView.adapter = MatchAdapter(matches) { user ->
-                            parentFragmentManager.commit {
-                                replace(R.id.fragment_container, ChatWindowFragment.newInstance(user))
-                                addToBackStack(null) // allows user to use android's "back" button
-                            }
-                        }
+                        val matches = response.body() ?: emptyList()
+                        onResult(matches)
                     } else {
-                        // error handling
                         Toast.makeText(requireContext(), "Failed to load matches", Toast.LENGTH_SHORT).show()
+                        onResult(emptyList())
                     }
                 }
 
-                // have toast show api error
                 override fun onFailure(call: Call<List<User>>, t: Throwable) {
                     Toast.makeText(requireContext(), "Error: ${t.message}", Toast.LENGTH_SHORT).show()
+                    onResult(emptyList())
                 }
             })
     }
+
 
     // binds matched users to their cards
     class MatchAdapter(
