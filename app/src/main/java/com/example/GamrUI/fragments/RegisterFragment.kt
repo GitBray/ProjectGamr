@@ -28,10 +28,12 @@ class RegisterFragment : Fragment() {
         val passwordField = view.findViewById<EditText>(R.id.passwordField)
         val registerButton = view.findViewById<Button>(R.id.registerButton)
 
+        // When register button is clicked
         registerButton.setOnClickListener {
             val username = usernameField.text.toString()
             val password = passwordField.text.toString()
 
+            // call register API
             if (username.isNotEmpty() && password.isNotEmpty()) {
                 RetrofitClient.apiService.registerUser(username, password)
                     .enqueue(object : Callback<GenericResponse> {
