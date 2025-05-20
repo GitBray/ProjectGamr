@@ -5,7 +5,7 @@ header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json");
 
 // Connects to my MySQL database, needs to change the password to your password on MySQL!!
-$conn = new mysqli("localhost", "root", "ZAQ!1qazXSW@2wsx", "gamr");
+$conn = new mysqli("localhost", "root", "", "gamr");
 
 if ($conn->connect_error) {
     die(json_encode(["error" => $conn->connect_error]));
