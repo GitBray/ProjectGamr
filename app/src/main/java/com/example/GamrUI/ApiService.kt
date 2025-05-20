@@ -54,8 +54,9 @@ interface ApiService {
     @POST("send_message.php")
     fun sendMessage(
         @Field("sender_id") senderId: Int,
-        @Field("reciever_id") receiverId: Int,
-        @Field("message") message: String
+        @Field("reciever_id") recieverId: Int,
+        @Field("message") message: String,
+        @Field("timestamp") timestamp: String
     ): Call<GenericResponse>
 
     @GET("get_messages.php")
