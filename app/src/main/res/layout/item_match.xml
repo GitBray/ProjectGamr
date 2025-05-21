@@ -1,51 +1,42 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Creates a card that displays the information
-of a matched user in the chat section -->
-
-<!-- MaterialCardView is the container for card info -->
-<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="8dp"
-    app:cardBackgroundColor="#4A4A4A"
-    app:cardCornerRadius="12dp"
-    app:strokeColor="#FFFFFF"
-    app:strokeWidth="1dp"
-    app:cardElevation="0dp">
+    android:padding="12dp"
+    android:orientation="horizontal">
 
-    <!-- Displayed information is stored in a linear layout -->
-    <!-- Access of this information can be seen in MatchAdapter method
-         in MatchListFragment -->
+    <ImageView
+        android:id="@+id/matchImage"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
+        android:layout_marginEnd="12dp"
+        android:scaleType="centerCrop"
+        android:src="@drawable/default_profile" />
+
     <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="16dp"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_weight="1">
 
-        <!-- Username Text - is most prominent -->
         <TextView
             android:id="@+id/matchUsername"
-            android:textSize="18sp"
             android:textStyle="bold"
-            android:textColor="#FFFFFF"
+            android:textSize="16sp"
+            android:text="Gamertag"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
 
-        <!-- Favorite Game and Gameplay Style - smaller text -->
         <TextView
             android:id="@+id/matchGame"
-            android:textSize="14sp"
-            android:textColor="#CCCCCC"
-            android:layout_marginTop="4dp"
+            android:text="Game: Valorant"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
 
         <TextView
             android:id="@+id/matchStyle"
-            android:textSize="14sp"
-            android:textColor="#CCCCCC"
+            android:text="Style: Competitive"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
     </LinearLayout>
-</com.google.android.material.card.MaterialCardView>
+</LinearLayout>

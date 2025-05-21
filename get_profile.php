@@ -13,7 +13,23 @@ if (!$userId) {
     exit;
 }
 
-$stmt = $conn->prepare("SELECT user_id, bio, discord, instagram, preferred_playstyle AS playing_style FROM users WHERE user_id = ?");
+// Expanded query to include all relevant fields for profile display
+$stmt = $conn->prepare("SELECT
+    user_id,
+    gamertag,
+    username,
+    name,
+    age,
+    current_game,
+    current_game_genre,
+    bio,
+    discord,
+    instagram,
+    preferred_playstyle AS playing_style,
+    image_url
+    FROM users
+    WHERE user_id = ?");
+
 $stmt->bind_param("i", $userId);
 $stmt->execute();
 $result = $stmt->get_result();

@@ -23,6 +23,7 @@ import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.File
+import com.bumptech.glide.Glide
 
 
 class ProfileFragment : Fragment() {
@@ -152,6 +153,15 @@ class ProfileFragment : Fragment() {
                 val styles = resources.getStringArray(R.array.playing_styles)
                 val index = styles.indexOfFirst { it.equals(profile.preferred_playstyle, ignoreCase = true) }
                 if (index >= 0) spinnerStyle.setSelection(index)
+
+                // Load image from server if available
+                profile.image_url?.let { url ->
+                    Glide.with(requireContext())
+                        .load(url)
+                        .placeholder(R.drawable.default_profile) // Optional
+                        .into(imageView)
+                }
+
                 Log.d("PROFILE_DEBUG", response.body().toString())
 
             }

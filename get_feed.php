@@ -1,17 +1,17 @@
 <?php
-// Assistance from ChatGPT 
+// Assistance from ChatGPT
 
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json");
 
-// Connects to my MySQL database, needs to change the password to your password on MySQL!!
+// Connects to MySQL database
 $conn = new mysqli("localhost", "root", "", "gamr");
 
 if ($conn->connect_error) {
     die(json_encode(["error" => $conn->connect_error]));
 }
 
-// Safely grab user_id from GET
+// Get user_id from GET safely
 $userId = $_GET['user_id'] ?? null;
 
 if (!$userId) {
@@ -19,16 +19,16 @@ if (!$userId) {
     exit;
 }
 
-// convers user to int to prevent injection
-$userId = intval($userId); 
+$userId = intval($userId); // sanitize for safety
 
-$sql = "SELECT * FROM users
+$sql = "SELECT user_id, gamertag, username, name, age, preferred_playstyle, current_game,
+               current_game_genre, bio, latitude, longitude, discord, instagram, playing_style, image_url
+        FROM users
         WHERE user_id != $userId
         AND user_id NOT IN (
             SELECT swipee_id FROM swipes WHERE swiper_id = $userId
         )";
 
-//runs query and fetch results into an array
 $result = $conn->query($sql);
 $users = [];
 
