@@ -35,7 +35,7 @@ $stmt->execute();
 $result = $stmt->get_result();
 
 if ($row = $result->fetch_assoc()) {
-    echo json_encode($row);
+    echo json_encode($row, JSON_UNESCAPED_SLASHES);
 } else {
     echo json_encode(["status" => "error", "message" => "User not found"]);
 }
