@@ -16,6 +16,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.ComposeView
@@ -39,6 +40,11 @@ import java.util.*
 import kotlin.math.pow
 import kotlin.math.roundToInt
 
+// ChatGPT assisted in various aspects of this fragment
+// Particularly in regard to card display/formatting, distance and map formulas, & animations
+
+// This is the local UI model for the class LocalUser
+
 data class LocalUser(
     val userId: Int,
     val gamertag: String,
@@ -54,6 +60,7 @@ data class LocalUser(
     val profileImageUrl: String? = null
 )
 
+// Store a user's choice on another user
 data class Swipe(
     val swiperId: Int,
     val swipeeId: Int,
@@ -70,7 +77,9 @@ class PeopleFragment : Fragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Initialize the FusedLocationProvider client
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext())
+        // Grab the current user location
         fetchUserLocation()
     }
 
@@ -84,15 +93,21 @@ class PeopleFragment : Fragment() {
         }
     }
 
+    // Location Permissions are initialized in AndroidManifest and requested here
+    // Makes use of FusedLocationProviderClient to grab current location
+    // AI assisted with the use of "Context", it's purpose is to assist in accessing resources
+    // (like location) from outside of the fragment.
     private fun fetchUserLocation() {
         if (
             ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
             ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED
         ) {
+            // Request permissions uses a deprecated java function, but works on most all android versions
             requestPermissions(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), LOCATION_PERMISSION_REQUEST_CODE)
             return
         }
 
+        // Error detection - Virtual Devices don't like using location, so work with null locations
         fusedLocationClient.lastLocation.addOnSuccessListener { location: Location? ->
             location?.let {
                 currentLatitude = it.latitude
@@ -118,9 +133,14 @@ class PeopleFragment : Fragment() {
         var allUsers by remember { mutableStateOf<List<User>>(emptyList()) }
         val coroutineScope = rememberCoroutineScope()
 
+        // tracking variables for if the card should be shown
+        var showMatchCard by remember { mutableStateOf(false) }
+        var matchedUser by remember { mutableStateOf<User?>(null) }
+
         val selectedPlaystyles by filterViewModel.selectedPlaystyles.collectAsState()
         val selectedGenres by filterViewModel.selectedGenres.collectAsState()
 
+        // Fetch user feed once the screen is loaded
         LaunchedEffect(Unit) {
             coroutineScope.launch {
                 val response = RetrofitClient.apiService.getUserFeed(currentUserId)
@@ -130,24 +150,32 @@ class PeopleFragment : Fragment() {
             }
         }
 
+        // Handles user's choice on another user and sends it to the server
         fun handleSwipe(swipee: User, direction: String) {
             swipeHistory.add(Swipe(currentUserId, swipee.user_id, direction))
             coroutineScope.launch {
                 try {
                     val response = RetrofitClient.apiService.submitSwipe(currentUserId, swipee.user_id, direction)
-                    if (response.isSuccessful && response.body()?.get("success") == true) {
-                        Log.d("SWIPE", "Swipe success")
+                    val body = response.body()
+                    if (response.isSuccessful && body?.get("message") == "Match created") {
+                        matchedUser = swipee
+                        showMatchCard = true
                     }
                 } catch (_: Exception) {}
             }
         }
 
+        // Filter out already swiped users and apply the playstyle and genre filters
         val recommendedUsers = allUsers.filter { user ->
             swipeHistory.none { it.swipeeId == user.user_id && it.swiperId == currentUserId } &&
                     (selectedPlaystyles.isEmpty() || selectedPlaystyles.contains(user.preferred_playstyle)) &&
                     (selectedGenres.isEmpty() || selectedGenres.contains(user.current_game_genre))
         }
 
+
+        // Sort users by distance from current user
+        // If location cannot be accessed, distance is set to 0.0 and algorithm displays
+        // in order of their appearance on the database.
         val sortedUsers = recommendedUsers.map { user ->
             val distance = currentLatitude?.let { lat1 ->
                 currentLongitude?.let { lon1 ->
@@ -157,41 +185,95 @@ class PeopleFragment : Fragment() {
             user to distance
         }.sortedBy { it.second }
 
-        if (sortedUsers.isNotEmpty()) {
-            val user = sortedUsers.first().first
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.SpaceBetween
-            ) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            // Display users sorted by distance
+            if (sortedUsers.isNotEmpty()) {
+                val user = sortedUsers.first().first
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        // Pass context to toLocalUser
+                        SwipeableProfileCard(
+                            user = user.toLocalUser(context),
+                            onSwipe = { direction -> handleSwipe(user, direction) }
+                        )
+                    }
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 16.dp),
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
+                        Button(onClick = { handleSwipe(user, "dislike") }) { Text("Dislike") }
+                        Button(onClick = { handleSwipe(user, "like") }) { Text("Like") }
+                    }
+                }
+            } else {
+                Text(
+                    text = "No more users to display",
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.align(Alignment.Center),
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+            }
+
+            // Match card shown when a mutual like is detected
+            if (showMatchCard && matchedUser != null) {
                 Box(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f),
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = 0.6f)),
                     contentAlignment = Alignment.Center
                 ) {
-                    SwipeableProfileCard(
-                        user = user.toLocalUser(context),
-                        onSwipe = { direction -> handleSwipe(user, direction) }
-                    )
-                }
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 16.dp),
-                    horizontalArrangement = Arrangement.SpaceEvenly
-                ) {
-                    Button(onClick = { handleSwipe(user, "dislike") }) { Text("Dislike") }
-                    Button(onClick = { handleSwipe(user, "like") }) { Text("Like") }
+                    Card(
+                        modifier = Modifier.fillMaxWidth(0.85f),
+                        elevation = CardDefaults.cardElevation(12.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(24.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text("🎮 It’s a Match!", style = MaterialTheme.typography.headlineSmall)
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text("You matched with ${matchedUser?.gamertag}!", style = MaterialTheme.typography.bodyLarge)
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Row(
+                                horizontalArrangement = Arrangement.SpaceEvenly,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Button(onClick = { showMatchCard = false }) {
+                                    Text("Keep Swiping")
+                                }
+                                Button(onClick = {
+                                    showMatchCard = false
+                                    parentFragmentManager.commit {
+                                        replace(R.id.fragment_container, ChatWindowFragment.newInstance(matchedUser!!))
+                                        addToBackStack(null)
+                                    }
+                                }) {
+                                    Text("Chat Now")
+                                }
+                            }
+                        }
+                    }
                 }
             }
-        } else {
-            Text("No more users to display")
         }
     }
 
+    // Profile card with swiping functionality
+    // Detects gestures, if a certain amount of movement is detected, perform swipes.
+    // Information displayed is stored in ProfileCard composable
     @Composable
     fun SwipeableProfileCard(user: LocalUser, onSwipe: (String) -> Unit) {
         var offsetX by remember { mutableStateOf(0f) }
@@ -223,6 +305,7 @@ class PeopleFragment : Fragment() {
         }
     }
 
+    // Profile card defines the information that will be displayed on the card.
     @Composable
     fun ProfileCard(user: LocalUser, modifier: Modifier = Modifier) {
         Card(
@@ -262,6 +345,10 @@ class PeopleFragment : Fragment() {
         }
     }
 
+    // User.toLocalUser accesses profile coordinates and current user coordinate to calculate distance
+    // as the card appears in the feed
+    // Returns an instance of LocalUser with all associated information.
+
     fun User.toLocalUser(context: android.content.Context): LocalUser {
         val distance = if (latitude != null && longitude != null && currentLatitude != null && currentLongitude != null)
             calculateDistance(currentLatitude!!, currentLongitude!!, latitude, longitude)
@@ -283,6 +370,8 @@ class PeopleFragment : Fragment() {
         )
     }
 
+    // Calculates distance between two coordinates using an algorithm called "Haversine formula"
+    // ChatGPT assisted in getting it written in Kotlin
     fun calculateDistance(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
         val earthRadius = 3958.8
         val dLat = Math.toRadians(lat2 - lat1)
@@ -296,6 +385,11 @@ class PeopleFragment : Fragment() {
         return earthRadius * c
     }
 
+    // Determine a profile's city.
+    // Makes use of android's geocoder
+    // Stores a city and state as strings if an address can be found.
+    // Returns 'Unknown' if location cannot be accessed.
+    // AI assistance provided me with a 'deprecated' function, I am commiting with these as they work for most versions
     fun getNearestTown(context: android.content.Context, latitude: Double, longitude: Double): String? {
         return try {
             val geocoder = Geocoder(context, Locale.getDefault())
@@ -312,6 +406,6 @@ class PeopleFragment : Fragment() {
     }
 
     companion object {
-        private const val LOCATION_PERMISSION_REQUEST_CODE = 1001
+        private const val LOCATION_PERMISSION_REQUEST_CODE = 1001 // Location permissions require a request code
     }
 }
