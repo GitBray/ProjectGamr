@@ -1,13 +1,13 @@
 <?php
 // update_file.php
 // Updates a user's profile: text fields (bio, discord, instagram, preferred_playstyle) and/or profile image.
-
+ob_start();
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: POST, GET, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type");
 header("Content-Type: application/json");
 
-$target_dir = "uploads/";
+$target_dir = "../uploads/";
 
 // DB connection
 $conn = new mysqli("localhost", "root", "", "gamr");
@@ -55,7 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Construct full public URL
             $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? "https" : "http";
             $host = $_SERVER['HTTP_HOST'];
-            $image_url = "$protocol://$host/$target_file";
+            $image_url = "$protocol://$host/uploads/$image_name";
 
             // Delete old image if exists
             $getOld = $conn->prepare("SELECT image_url FROM users WHERE user_id = ?");
@@ -88,11 +88,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Return final result
     if ($updated) {
-        echo json_encode(["status" => "success", "message" => "Profile updated"]);
+        echo json_encode(["status" => "success", "message" => "Profile updated", "image_url" => $image_url ?? null], JSON_UNESCAPED_SLASHES);
     } else {
-        echo json_encode(["status" => "no_change", "message" => "No fields updated"]);
+        echo json_encode(["status" => "no_change", "message" => "No fields updated"],JSON_UNESCAPED_SLASHES);
     }
 }
 
 $conn->close();
+ob_end_flush();
 ?>
