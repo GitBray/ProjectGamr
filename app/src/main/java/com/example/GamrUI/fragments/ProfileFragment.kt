@@ -146,29 +146,33 @@ class ProfileFragment : Fragment() {
         RetrofitClient.apiService.getProfile(userId).enqueue(object : Callback<UserProfile> {
             override fun onResponse(call: Call<UserProfile>, response: Response<UserProfile>) {
                 val profile = response.body() ?: return
-                editTextBio.setText(profile.bio)
-                editTextDiscord.setText(profile.discord)
-                editTextInstagram.setText(profile.instagram)
+
+                // Prevent null overwrites
+                editTextBio.setText(profile.bio ?: "")
+                editTextDiscord.setText(profile.discord ?: "")
+                editTextInstagram.setText(profile.instagram ?: "")
 
                 val styles = resources.getStringArray(R.array.playing_styles)
                 val index = styles.indexOfFirst { it.equals(profile.preferred_playstyle, ignoreCase = true) }
                 if (index >= 0) spinnerStyle.setSelection(index)
 
-                // Load image from server if available
-                profile.image_url?.let { url ->
+                if (!profile.image_url.isNullOrEmpty()) {
                     Glide.with(requireContext())
-                        .load(url)
-                        .placeholder(R.drawable.default_profile) // Optional
+                        .load(profile.image_url)
+                        .placeholder(R.drawable.default_profile)
                         .into(imageView)
+                } else {
+                    imageView.setImageResource(R.drawable.default_profile)
                 }
 
                 Log.d("PROFILE_DEBUG", response.body().toString())
-
             }
 
             override fun onFailure(call: Call<UserProfile>, t: Throwable) {
+                Log.e("PROFILE_ERROR", "Profile load failed", t)
                 Toast.makeText(context, "Failed to load profile", Toast.LENGTH_SHORT).show()
             }
         })
     }
+
 }
