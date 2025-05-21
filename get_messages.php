@@ -3,7 +3,7 @@ header('Content-Type: application/json');
 error_reporting(0);
 ini_set('display_errors', 0);
 
-$conn = new mysqli("localhost", "root", "passhere", "gamr");
+$conn = new mysqli("localhost", "root", "", "gamr");
 if ($conn->connect_error) {
     echo json_encode(["success" => false, "message" => "Connection failed"]);
     exit;

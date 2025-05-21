@@ -5,7 +5,7 @@ ob_start(); // Start output buffering
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json");
 
-$conn = new mysqli("localhost", "root", "ZAQ!1qazXSW@2wsx", "gamr");
+$conn = new mysqli("localhost", "root", "", "gamr");
 
 if ($conn->connect_error) {
     http_response_code(500);

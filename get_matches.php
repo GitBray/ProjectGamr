@@ -5,7 +5,7 @@ error_reporting(0);
 ini_set('display_errors', 0); // error detection removed as a safety net for output reading
                                 // will be removed after more rigorous testing
 
-$conn = new mysqli("localhost","root","passhere", "gamr");
+$conn = new mysqli("localhost","root","", "gamr");
 
 if (!isset($_GET['user_id'])) {
     echo json_encode(["status" => "error", "message" => "Missing user_id"]);

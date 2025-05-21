@@ -5,7 +5,7 @@ error_reporting(0);
 ini_set('display_errors', 0); // removing error reporting fixed an issue I had with json reading the first output (Bray)
                               // keeping the code here but I'll test more soon and probably remove this.
 
-$conn = new mysqli("localhost", "root", "passhere", "gamr");
+$conn = new mysqli("localhost", "root", "", "gamr");
 if ($conn->connect_error) {
     echo json_encode(["success" => false, "message" => "Connection failed"]);
     exit;
