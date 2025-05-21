@@ -159,6 +159,7 @@ class ChatWindowFragment : Fragment() {
 
         container.addView(messageView)
         chatMessages.addView(container)
+
     }
 
     // Grabs current timestamp to store and display
