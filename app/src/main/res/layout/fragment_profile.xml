@@ -32,6 +32,7 @@
             android:id="@+id/textViewPlayStyleLabel"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
             android:layout_marginBottom="8dp"
             android:text="Select Your Play Style"
             android:textSize="18sp"
@@ -71,6 +72,7 @@
 
         <Button
             android:id="@+id/buttonAddMedia"
+            android:layout_marginTop="20dp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Add Media" />
@@ -79,7 +81,7 @@
             android:id="@+id/recyclerViewMedia"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:minHeight="200dp"
+            android:minHeight="60dp"
             android:nestedScrollingEnabled="false"
             android:layout_marginTop="16dp"
             android:layout_marginBottom="16dp"/>

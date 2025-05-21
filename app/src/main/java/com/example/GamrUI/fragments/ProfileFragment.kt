@@ -191,6 +191,7 @@ class ProfileFragment : Fragment() {
 
         RetrofitClient.apiService.getProfile(userId).enqueue(object : Callback<UserProfile> {
             override fun onResponse(call: Call<UserProfile>, response: Response<UserProfile>) {
+
                 val profile = response.body() ?: return
                 editTextBio.setText(profile.bio)
                 editTextDiscord.setText(profile.discord)
@@ -204,6 +205,8 @@ class ProfileFragment : Fragment() {
             }
 
             override fun onFailure(call: Call<UserProfile>, t: Throwable) {
+                Log.e("PROFILE_DEBUG", "onFailure triggered")
+                Log.e("PROFILE_DEBUG", "Error: ${t.javaClass.simpleName} - ${t.message}", t)
                 Toast.makeText(context, "Failed to load profile", Toast.LENGTH_SHORT).show()
             }
         })

@@ -68,11 +68,14 @@ FOREIGN KEY (sender_id) REFERENCES users(user_id),
 FOREIGN KEY (reciever_id) REFERENCES users(user_id)
 );
 
-CREATE TABLE media(
-user_id INT AUTO_INCREMENT PRIMARY KEY,
-media_url varchar(255) DEFAULT NULL,
+CREATE TABLE media (
+media_id INT AUTO_INCREMENT PRIMARY KEY,
+user_id INT NOT NULL,
+media_url VARCHAR(255) NOT NULL,
+media_type ENUM('image', 'video') DEFAULT 'image',
 FOREIGN KEY (user_id) REFERENCES users(user_id)
 );
+
 
 INSERT INTO users (username, password, gamertag, name, age, preferred_playstyle, current_game, bio, latitude, longitude)
 VALUES
@@ -136,7 +139,7 @@ DELETE FROM swipes;
 -- adds text bio's, discord, insta, playstyle
 ALTER TABLE users
 ADD COLUMN discord VARCHAR(255),
-ADD COLUMN instagram VARCHAR(255),
-ADD COLUMN playing_style VARCHAR(50);
+ADD COLUMN instagram VARCHAR(255);
+-- ADD COLUMN playing_style VARCHAR(50);
 
 ALTER TABLE users ADD COLUMN image_url VARCHAR(255) DEFAULT NULL;
