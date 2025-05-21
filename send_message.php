@@ -4,7 +4,7 @@ header('Content-Type: application/json');
 error_reporting(0);
 ini_set('display_errors', 0);
 
-$conn = new mysqli("localhost", "root","passhere","gamr");
+$conn = new mysqli("localhost", "root","","gamr");
 
 // Use typo in variable name to match external tools
 if (!isset($_POST['sender_id'], $_POST['reciever_id'], $_POST['message'])) {

@@ -82,18 +82,21 @@ class ExploreFragment : Fragment() {
 
         }
 
+        // Sets values for what is playstyles and what buttons they are
         val playstyles = filterViewModel.selectedPlaystyles.value
         casualButton.isChecked = "Casual" in playstyles
         competitiveButton.isChecked = "Competitive" in playstyles
         rankedButton.isChecked = "Ranked" in playstyles
         coopButton.isChecked = "Co-op" in playstyles
 
+        // Sets values for what is genres and what buttons they are
         val genres = filterViewModel.selectedGenres.value
         fightingButton.isChecked = "Fighting" in genres
         fpsButton.isChecked = "FPS" in genres
         mobaButton.isChecked = "MOBA" in genres
         racingButton.isChecked = "Racing" in genres
 
+            // Staying turned on after changing fragment logic
         viewLifecycleOwner.lifecycleScope.launch {
             filterViewModel.selectedPlaystyles.collect { playstyles ->
                 casualButton.isChecked = "Casual" in playstyles

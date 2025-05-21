@@ -1,11 +1,25 @@
 <?php
 header("Content-Type: application/json");
-include 'get_users.php'; // need to connect this to the actual DB
 
-$user_id = $_POST['user_id'];
-$device_token = $_POST['device_token'];
+// Add database connection directly
+$conn = new mysqli("localhost", "root", "", "gamr");
 
-$stmt = $conn->prepare("UPDATE users SET device_token=? WHERE user_id=?");
+if ($conn->connect_error) {
+    echo json_encode(["success" => false, "error" => "Connection failed"]);
+    exit;
+}
+
+// Get POST data
+$user_id = $_POST['user_id'] ?? null;
+$device_token = $_POST['device_token'] ?? null;
+
+if (!$user_id || !$device_token) {
+    echo json_encode(["success" => false, "error" => "Missing required fields"]);
+    exit;
+}
+
+// Update token
+$stmt = $conn->prepare("UPDATE users SET device_token = ? WHERE user_id = ?");
 $stmt->bind_param("si", $device_token, $user_id);
 
 if ($stmt->execute()) {
@@ -13,4 +27,7 @@ if ($stmt->execute()) {
 } else {
     echo json_encode(["success" => false, "error" => $stmt->error]);
 }
+
+$stmt->close();
+$conn->close();
 ?>

@@ -4,7 +4,7 @@
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json");
 
-$conn = new mysqli("localhost", "root", "ZAQ!1qazXSW@2wsx", "gamr");
+$conn = new mysqli("localhost", "root", "", "gamr");
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST'){
     echo json_encode(["status" => "error", "message" => "Only POST allowed"]);

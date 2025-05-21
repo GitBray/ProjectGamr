@@ -1,15 +1,12 @@
 package com.example.GamrUI
 
+import com.google.gson.annotations.SerializedName
 
 data class UserProfile(
-    val username: String?,
-    val gamertag: String?,
-    val name: String?,
-    val age: Int?,
-    val preferred_playstyle: String?,
-    val current_game: String?,
+    val user_id: Int,
     val bio: String?,
     val discord: String?,
     val instagram: String?,
+    @SerializedName("playing_style") val preferred_playstyle: String?,
     val image_url: String?
 )
