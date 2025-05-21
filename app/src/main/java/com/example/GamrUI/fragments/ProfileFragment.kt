@@ -18,11 +18,15 @@ import android.content.Intent
 import android.net.Uri
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
+import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.example.GamrUI.MediaAdapter
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.File
+
 
 
 class ProfileFragment : Fragment() {
@@ -33,8 +37,12 @@ class ProfileFragment : Fragment() {
     private lateinit var spinnerStyle: Spinner
 
     private val PICK_IMAGE_REQUEST = 1001
+    private val PICK_MEDIA_REQUEST = 1
+    private val mediaUris = mutableListOf<Uri>() // for media
     private var selectedImageUri: Uri? = null
+    private var mediaAdapter: MediaAdapter? = null
     private lateinit var imageView: ImageView
+
 
     private fun getUserId(): Int{
         val sharedPref = requireActivity().getSharedPreferences("GamrPrefs", AppCompatActivity.MODE_PRIVATE)
@@ -54,12 +62,26 @@ class ProfileFragment : Fragment() {
 
         imageView = view.findViewById(R.id.imageViewProfile)
         val buttonSelectImage = view.findViewById<Button>(R.id.buttonSelectImage)
-
         buttonSelectImage.setOnClickListener {
             val intent = Intent(Intent.ACTION_GET_CONTENT)
             intent.type = "image/*"
             startActivityForResult(intent, PICK_IMAGE_REQUEST)
         }
+
+        // media upload button function
+        val buttonAddMedia = view.findViewById<Button>(R.id.buttonAddMedia)
+        buttonAddMedia.setOnClickListener {
+            val intent = Intent(Intent.ACTION_GET_CONTENT)
+            intent.type = "*/*"
+            intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
+            intent.putExtra(Intent.EXTRA_MIME_TYPES, arrayOf("image/*", "video/*"))
+            startActivityForResult(intent, PICK_MEDIA_REQUEST)
+        }
+
+        val recyclerViewMedia = view.findViewById<RecyclerView>(R.id.recyclerViewMedia)
+        recyclerViewMedia.layoutManager = GridLayoutManager(context, 3)
+        mediaAdapter = MediaAdapter(mediaUris)
+        recyclerViewMedia.adapter = mediaAdapter
 
         view.findViewById<Button>(R.id.buttonSave).setOnClickListener { saveProfile() }
         view.findViewById<Button>(R.id.buttonDiscard).setOnClickListener { loadProfile() }
@@ -126,12 +148,37 @@ class ProfileFragment : Fragment() {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
+
+        // for profile image
         if (requestCode == PICK_IMAGE_REQUEST && resultCode == AppCompatActivity.RESULT_OK) {
             selectedImageUri = data?.data
             selectedImageUri?.let {
                 imageView.setImageURI(it)
             }
         }
+
+        if (resultCode != AppCompatActivity.RESULT_OK || data == null) return
+
+        when (requestCode) {
+            PICK_IMAGE_REQUEST -> {
+                selectedImageUri = data.data
+                selectedImageUri?.let { imageView.setImageURI(it) }
+            }
+
+            PICK_MEDIA_REQUEST -> {
+                if (data.clipData != null) {
+                    val count = data.clipData!!.itemCount
+                    for (i in 0 until count) {
+                        val mediaUri = data.clipData!!.getItemAt(i).uri
+                        mediaUris.add(mediaUri)
+                    }
+                } else {
+                    data.data?.let { mediaUris.add(it) }
+                }
+                mediaAdapter?.updateMedia(mediaUris)
+            }
+        }
+
     }
 
 

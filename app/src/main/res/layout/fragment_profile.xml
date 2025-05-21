@@ -69,6 +69,21 @@
             android:hint="Enter your Instagram username"
             android:inputType="textPersonName" />
 
+        <Button
+            android:id="@+id/buttonAddMedia"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Add Media" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerViewMedia"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="200dp"
+            android:nestedScrollingEnabled="false"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="16dp"/>
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

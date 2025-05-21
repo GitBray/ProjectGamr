@@ -1,4 +1,4 @@
-CREATE DATABASE IF NOT EXISTS Gamr;
+ CREATE DATABASE IF NOT EXISTS Gamr;
 USE Gamr;
 
 -- Drop tables if needed (optional safety reset)
@@ -7,6 +7,7 @@ DROP TABLE IF EXISTS messages;
 DROP TABLE IF EXISTS swipes;
 DROP TABLE IF EXISTS region;
 DROP TABLE IF EXISTS games_played;
+DROP TABLE IF EXISTS media;
 DROP TABLE IF EXISTS users;
 
 CREATE TABLE users (
@@ -65,6 +66,12 @@ message TEXT NOT NULL,
 TIMESTAMP DATETIME DEFAULT CURRENT_TIMESTAMP,
 FOREIGN KEY (sender_id) REFERENCES users(user_id),
 FOREIGN KEY (reciever_id) REFERENCES users(user_id)
+);
+
+CREATE TABLE media(
+user_id INT AUTO_INCREMENT PRIMARY KEY,
+media_url varchar(255) DEFAULT NULL,
+FOREIGN KEY (user_id) REFERENCES users(user_id)
 );
 
 INSERT INTO users (username, password, gamertag, name, age, preferred_playstyle, current_game, bio, latitude, longitude)
